@@ -542,6 +542,52 @@
       transform: scale(1.05);
       background: rgba(91, 108, 249, 0.08);
     }
+
+    /* Responsive sidebar */
+    @media (max-width: 1024px) {
+      :root {
+        --sidebar-w: 0px;
+      }
+
+      #app-sidebar {
+        transform: translateX(-100%);
+        width: 260px !important;
+      }
+
+      #app-sidebar.open {
+        transform: translateX(0);
+      }
+
+      #main-area {
+        margin-left: 0 !important;
+      }
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 640px) {
+      .project-card {
+        padding: 1rem;
+      }
+
+      .kanban-column {
+        min-width: 280px;
+      }
+    }
+
+    /* Print styles */
+    @media print {
+
+      #app-sidebar,
+      #sidebar-overlay,
+      .btn-primary,
+      .quick-action {
+        display: none !important;
+      }
+
+      #main-area {
+        margin-left: 0 !important;
+      }
+    }
   </style>
 </head>
 
@@ -634,6 +680,8 @@
         <!-- Footer -->
         <div class="mt-3 pt-3 border-t border-surface-700/50 flex items-center justify-between px-3">
           <span class="text-[11px] text-surface-500">Data persists in browser</span>
+          <a href="https://huggingface.co/spaces/akhaliq/anycoder" target="_blank" rel="noopener noreferrer"
+            class="text-[11px] text-accent-light hover:text-accent transition-colors">Built with anycoder</a>
         </div>
       </div>
     </aside>
@@ -955,3 +1003,10 @@
             return [
                 {
                     id: 'p-'+uid(), name:'Website Redesign', desc:'Complete overhaul of the company website with modern design.', 
+                    status:'active', priority:'high', category:'development', color:'#5b6cf9', tags:['frontend','ui','responsive'], 
+                    due: dateStr(now + 14*86400000), created: now, updated: now,
+                    tasks: [
+                        {id:'t-'+uid(), title:'Design homepage mockup', desc:'Create Figma mockups for the new homepage', status:'done', priority:'high', due: dateStr(now - 2*86400000), assignee:'Sarah Chen', created: now},
+                        {id:'t-'+uid(), title:'Implement responsive navigation', desc:'Build mobile-first nav with hamburger menu', status:'in-progress', priority:'high', due: dateStr(now + 3*86400000), assignee:'Mike Ross', created: now},
+                        {id:'t-'+uid(), title:'Set up CI/CD pipeline', desc:'Configure GitHub Actions for automated testing', status:'todo', priority:'medium', due: dateStr(now + 7*86400000), assignee:'Alex Kim', created: now},
+                        {id:'t-'+uid(), title:'Performance optimization', desc:'Optimize images and implement lazy loading', status:'todo', priority:'medium', due: dateStr(now + 10*86400000), assignee:'Sarah Chen', created

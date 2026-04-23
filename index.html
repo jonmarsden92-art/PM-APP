@@ -3,80 +3,60 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FluxForge — Project Management</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <title>FluxForge</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace'],
-          },
-          colors: {
-            surface: {
-              50:'#f9fafb',100:'#f0f2f5',150:'#eaedf1',200:'#e2e6ec',
-              300:'#cdd3dc',400:'#a8b2c0',500:'#8a96a8',600:'#6f7c8f',
-              700:'#5a6678',800:'#3d4556',900:'#1e232e',950:'#0d1018'
-            },
-            accent: {
-              DEFAULT:'#5b6cf9',
-              light:'#8b97fb',
-              dark:'#4350c7',
-              muted:'#c7ccf7',
-              surface:'#eef0fe'
-            },
-            success:'#3cc98e',
-            warning:'#e9a23b',
-            danger:'#e0605e',
-          }
-        }
-      }
-    }
-  </script>
 
-  <link rel="stylesheet" href="./css/styles.css">
+  <style>
+    body { font-family: system-ui; }
+  </style>
 </head>
 
-<body class="pattern-bg">
+<body class="bg-gray-100">
 
-  <div id="toast-container"></div>
+<div class="flex min-h-screen">
 
-  <!-- APP ROOT -->
-  <div class="flex min-h-screen">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-gray-900 text-white p-4">
+    <h1 class="text-xl font-bold mb-6">FluxForge</h1>
 
-    <!-- Sidebar -->
-    <aside id="app-sidebar"></aside>
+    <nav class="space-y-2">
+      <button onclick="app.showDashboard()" class="block w-full text-left px-3 py-2 hover:bg-gray-700 rounded">Dashboard</button>
+      <button onclick="app.showProjects()" class="block w-full text-left px-3 py-2 hover:bg-gray-700 rounded">Projects</button>
+    </nav>
 
-    <!-- Main -->
-    <main id="main-area">
-      <header id="topbar"></header>
-      <div id="content-area"></div>
-    </main>
+    <button onclick="app.openNewProject()" class="mt-6 w-full bg-blue-500 py-2 rounded">
+      + New Project
+    </button>
+  </aside>
 
+  <!-- Main -->
+  <main class="flex-1 p-6">
+
+    <h1 id="page-title" class="text-2xl font-bold mb-6">Dashboard</h1>
+
+    <div id="content"></div>
+
+  </main>
+
+</div>
+
+<!-- Modal -->
+<div id="modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center">
+  <div class="bg-white p-6 rounded w-96">
+    <h2 class="text-lg font-bold mb-4">New Project</h2>
+
+    <input id="project-name" placeholder="Project name"
+           class="w-full border p-2 mb-4"/>
+
+    <div class="flex justify-end gap-2">
+      <button onclick="app.closeModal()">Cancel</button>
+      <button onclick="app.saveProject()" class="bg-blue-500 text-white px-4 py-2 rounded">Save</button>
+    </div>
   </div>
+</div>
 
-  <!-- MODALS -->
-  <div id="modals"></div>
-
-  <!-- JS MODULES -->
-  <script src="./js/utils.js"></script>
-  <script src="./js/storage.js"></script>
-  <script src="./js/state.js"></script>
-  <script src="./js/ui.js"></script>
-  <script src="./js/projects.js"></script>
-  <script src="./js/tasks.js"></script>
-  <script src="./js/kanban.js"></script>
-  <script src="./js/calendar.js"></script>
-
-  <script src="./js/app.js"></script>
+<script src="app.js"></script>
 
 </body>
 </html>

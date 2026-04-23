@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FluxForge</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FluxForge SaaS</title>
 
-  <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com"></script>
 
-  <style>
-    body { font-family: system-ui; }
-  </style>
+<style>
+body { font-family: system-ui; }
+</style>
 </head>
 
 <body class="bg-gray-100">
@@ -21,64 +21,62 @@
     <h1 class="text-xl font-bold mb-6">FluxForge</h1>
 
     <nav class="space-y-2">
-      <button onclick="app.showDashboard()" class="nav-btn">Dashboard</button>
-      <button onclick="app.showProjects()" class="nav-btn">Projects</button>
-      <button onclick="app.showKanban()" class="nav-btn">Kanban</button>
+      <button onclick="app.showDashboard()" class="nav">Dashboard</button>
+      <button onclick="app.showProjects()" class="nav">Projects</button>
+      <button onclick="app.showKanban()" class="nav">Kanban</button>
     </nav>
 
     <button onclick="app.openProjectModal()" class="mt-auto bg-blue-500 py-2 rounded">
       + New Project
     </button>
+
+    <button onclick="app.exportData()" class="mt-2 bg-gray-700 py-2 rounded">
+      Export
+    </button>
+
+    <button onclick="app.importData()" class="mt-2 bg-gray-700 py-2 rounded">
+      Import
+    </button>
   </aside>
 
   <!-- MAIN -->
   <main class="flex-1 p-6">
-
-    <!-- HEADER -->
-    <div class="flex justify-between items-center mb-6">
-      <h1 id="page-title" class="text-2xl font-bold">Dashboard</h1>
-    </div>
-
-    <!-- CONTENT -->
+    <h1 id="title" class="text-2xl font-bold mb-6">Dashboard</h1>
     <div id="content"></div>
-
   </main>
 
 </div>
 
-<!-- PROJECT MODAL -->
-<div id="project-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center">
+<!-- MODAL -->
+<div id="modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center">
   <div class="bg-white p-6 rounded w-96">
-    <h2 class="text-lg font-bold mb-4">New Project</h2>
+    <h2 class="font-bold mb-4">New Project</h2>
+    <input id="name" class="w-full border p-2 mb-3" placeholder="Name">
+    <textarea id="desc" class="w-full border p-2 mb-3" placeholder="Description"></textarea>
 
-    <input id="project-name" placeholder="Project name"
-           class="w-full border p-2 mb-4"/>
-
-    <textarea id="project-desc" placeholder="Description"
-              class="w-full border p-2 mb-4"></textarea>
-
-    <div class="flex justify-end gap-2">
-      <button onclick="app.closeModal()">Cancel</button>
-      <button onclick="app.saveProject()" class="bg-blue-500 text-white px-4 py-2 rounded">
-        Save
-      </button>
+    <div class="flex justify-between">
+      <button onclick="app.generateShare()">Share</button>
+      <div>
+        <button onclick="app.closeModal()">Cancel</button>
+        <button onclick="app.saveProject()" class="bg-blue-500 text-white px-4 py-2 rounded">Save</button>
+      </div>
     </div>
+
+    <div id="shareLink" class="text-xs mt-3 break-all text-blue-600"></div>
   </div>
 </div>
 
 <script src="app.js"></script>
 
 <style>
-.nav-btn {
+.nav {
   display:block;
   width:100%;
   text-align:left;
   padding:8px;
   border-radius:6px;
 }
-.nav-btn:hover {
-  background:#374151;
-}
+.nav:hover { background:#374151; }
 </style>
 
 </body>

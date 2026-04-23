@@ -3,241 +3,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FluxForge | Local-First Teamwork</title>
+    <title>FluxForge OS | Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; background: #f8fafc; }
-        .sidebar-link.active { background: #1e293b; color: #f1f5f9; border-right: 4px solid #6366f1; }
-        .project-card:hover { border-color: #6366f1; transform: translateY(-2px); }
-        .tab-btn.active { border-bottom: 2px solid #6366f1; color: #6366f1; }
-        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; height: 100vh; overflow: hidden; }
+        .sidebar-item.active { background: #1e293b; color: #6366f1; border-right: 4px solid #6366f1; }
+        .tab-active { border-bottom: 2px solid #6366f1; color: #6366f1; }
+        .gantt-row:hover { background: rgba(99, 102, 241, 0.05); }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .slide-over { transition: transform 0.3s ease-in-out; }
     </style>
 </head>
 <body class="flex">
 
-    <aside class="w-64 bg-slate-900 h-full flex flex-col text-slate-400">
-        <div class="p-6 text-white font-bold text-xl flex items-center gap-2">
-            <div class="bg-indigo-600 p-1.5 rounded-lg"><i class="fas fa-cubes"></i></div>
+    <aside class="w-64 bg-slate-900 text-slate-400 flex flex-col shrink-0">
+        <div class="p-6 text-white font-bold text-xl flex items-center gap-3">
+            <div class="bg-indigo-600 p-2 rounded-lg"><i class="fas fa-project-diagram"></i></div>
             FluxForge
         </div>
-        
-        <nav class="flex-1 px-3 space-y-1">
-            <button onclick="changeGlobalView('home')" id="nav-home" class="sidebar-link active w-full flex items-center gap-3 p-3 rounded-lg transition-all">
-                <i class="fas fa-home"></i> Home
-            </button>
-            <button onclick="changeGlobalView('projects')" id="nav-projects" class="sidebar-link w-full flex items-center gap-3 p-3 rounded-lg transition-all">
-                <i class="fas fa-briefcase"></i> My Projects
-            </button>
+        <nav class="flex-1 px-4 space-y-1">
+            <div onclick="setView('home')" id="nav-home" class="sidebar-item active p-3 rounded-lg cursor-pointer flex items-center gap-3"><i class="fas fa-home"></i> Dashboard</div>
+            <div onclick="setView('projects')" id="nav-projects" class="sidebar-item p-3 rounded-lg cursor-pointer flex items-center gap-3"><i class="fas fa-tasks"></i> Projects</div>
         </nav>
-
         <div class="p-4 border-t border-slate-800">
-            <button onclick="openModal('newProjectModal')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-all">
-                <i class="fas fa-plus"></i> New Project
-            </button>
+            <button onclick="openModal('newProjectModal')" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold hover:bg-indigo-500 transition-colors">+ Project</button>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col h-full overflow-hidden">
-        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
-            <h2 id="current-view-title" class="font-bold text-slate-800 text-lg">Dashboard</h2>
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="h-16 bg-white border-b flex items-center justify-between px-8 shrink-0">
+            <h2 id="view-title" class="font-bold text-slate-800 uppercase tracking-wider text-sm">Overview</h2>
+            <div id="project-tabs" class="hidden flex gap-6 h-full items-center">
+                <button onclick="setProjectTab('list')" id="tab-list" class="tab-active h-full px-2 text-sm font-bold">List</button>
+                <button onclick="setProjectTab('gantt')" id="tab-gantt" class="h-full px-2 text-sm font-bold text-slate-400">Gantt</button>
+            </div>
             <div class="flex items-center gap-4">
-                <span class="text-xs font-semibold bg-slate-100 text-slate-500 px-2 py-1 rounded">LOCAL STORAGE ACTIVE</span>
-                <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs">U</div>
+                <div class="text-right"><p class="text-xs font-bold">Admin User</p><p class="text-[10px] text-slate-400">Local Session</p></div>
+                <div class="w-10 h-10 rounded-full bg-slate-200 border-2 border-white"></div>
             </div>
         </header>
 
-        <section id="main-viewport" class="flex-1 p-8 overflow-y-auto custom-scroll">
-            </section>
+        <section id="viewport" class="flex-1 overflow-auto custom-scroll p-8"></section>
     </main>
 
-    <div id="newProjectModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl w-full max-w-md shadow-2xl p-6">
-            <h3 class="text-xl font-bold mb-4">Create New Project</h3>
-            <input id="p-name" type="text" placeholder="Project Name" class="w-full border p-3 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-indigo-500">
-            <textarea id="p-desc" placeholder="Project Description" class="w-full border p-3 rounded-lg mb-4 outline-none h-24"></textarea>
-            <div class="flex gap-3">
-                <button onclick="closeModal('newProjectModal')" class="flex-1 bg-slate-100 py-2 rounded-lg font-medium">Cancel</button>
-                <button onclick="saveNewProject()" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg font-medium">Create</button>
-            </div>
+    <div id="taskOverlay" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40" onclick="closeTaskDetail()"></div>
+    <div id="taskDetail" class="fixed right-0 top-0 h-full w-full max-w-md bg-white z-50 shadow-2xl translate-x-full slide-over p-8 overflow-y-auto">
+        </div>
+
+    <div id="newProjectModal" class="hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center">
+        <div class="bg-white p-6 rounded-xl w-96 shadow-xl">
+            <h3 class="font-bold mb-4">New Project</h3>
+            <input id="new-p-name" type="text" placeholder="Project Name" class="w-full border p-2 rounded mb-4">
+            <button onclick="createProject()" class="w-full bg-indigo-600 text-white py-2 rounded font-bold">Launch</button>
+            <button onclick="closeModal('newProjectModal')" class="w-full text-slate-400 mt-2 text-sm">Cancel</button>
         </div>
     </div>
 
     <script>
-        // DATA LAYER
-        let state = JSON.parse(localStorage.getItem('flux_state')) || {
+        let state = JSON.parse(localStorage.getItem('ff_pro_state')) || {
             projects: [],
-            currentProject: null,
-            view: 'home'
+            activeView: 'home',
+            activeProjectId: null,
+            activeTab: 'list'
         };
 
+        const users = ["Alex Rivers", "Sam Chen", "Jordan Blake", "Casey Wright"];
+
         function sync() {
-            localStorage.setItem('flux_state', JSON.stringify(state));
+            localStorage.setItem('ff_pro_state', JSON.stringify(state));
             render();
         }
 
-        // NAVIGATION
-        function changeGlobalView(view) {
-            state.view = view;
-            state.currentProject = null;
-            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
-            document.getElementById(`nav-${view}`).classList.add('active');
+        function setView(v) {
+            state.activeView = v;
+            state.activeProjectId = null;
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(`nav-${v}`).classList.add('active');
+            document.getElementById('project-tabs').classList.add('hidden');
             sync();
         }
 
         function openProject(id) {
-            state.currentProject = id;
-            state.view = 'project-detail';
-            state.projectTab = 'tasks';
+            state.activeProjectId = id;
+            state.activeView = 'project-detail';
+            document.getElementById('project-tabs').classList.remove('hidden');
             sync();
         }
 
-        // PROJECT ACTIONS
-        function saveNewProject() {
-            const name = document.getElementById('p-name').value;
-            const desc = document.getElementById('p-desc').value;
-            if(!name) return alert("Name required");
+        function setProjectTab(t) {
+            state.activeTab = t;
+            sync();
+        }
 
-            const newProj = {
-                id: Date.now(),
-                name,
-                desc,
-                tasks: [],
-                status: 'Active',
-                created: new Date().toLocaleDateString()
-            };
-
-            state.projects.push(newProj);
+        function createProject() {
+            const name = document.getElementById('new-p-name').value;
+            if(!name) return;
+            state.projects.push({ id: Date.now(), name, tasks: [] });
             closeModal('newProjectModal');
             sync();
         }
 
-        function addTask(projectId) {
-            const title = prompt("Enter task title:");
-            if(!title) return;
-            const project = state.projects.find(p => p.id === projectId);
-            project.tasks.push({
+        function addTask() {
+            const p = state.projects.find(x => x.id === state.activeProjectId);
+            const today = new Date().toISOString().split('T')[0];
+            const nextWeek = new Date(Date.now() + 604800000).toISOString().split('T')[0];
+            p.tasks.push({
                 id: Date.now(),
-                title,
-                status: 'todo',
+                title: "New Task",
+                desc: "",
+                start: today,
+                end: nextWeek,
+                assignee: users[0],
+                status: 'Todo',
                 priority: 'Medium'
             });
             sync();
         }
 
-        function updateTaskStatus(projectId, taskId, status) {
-            const project = state.projects.find(p => p.id === projectId);
-            const task = project.tasks.find(t => t.id === taskId);
-            task.status = status;
+        function openTaskDetail(taskId) {
+            const p = state.projects.find(x => x.id === state.activeProjectId);
+            const t = p.tasks.find(x => x.id === taskId);
+            
+            const detail = document.getElementById('taskDetail');
+            detail.innerHTML = `
+                <div class="flex justify-between items-center mb-8">
+                    <span class="text-xs font-bold uppercase text-slate-400">Task Editor</span>
+                    <button onclick="closeTaskDetail()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+                </div>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Title</label>
+                        <input type="text" value="${t.title}" onchange="updateTask(${t.id}, 'title', this.value)" class="w-full text-xl font-bold border-b border-transparent hover:border-slate-200 focus:border-indigo-500 outline-none transition-all">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Start Date</label>
+                            <input type="date" value="${t.start}" onchange="updateTask(${t.id}, 'start', this.value)" class="w-full border rounded-lg p-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Due Date</label>
+                            <input type="date" value="${t.end}" onchange="updateTask(${t.id}, 'end', this.value)" class="w-full border rounded-lg p-2 text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Assignee</label>
+                        <select onchange="updateTask(${t.id}, 'assignee', this.value)" class="w-full border rounded-lg p-2 text-sm">
+                            ${users.map(u => `<option ${t.assignee === u ? 'selected' : ''}>${u}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Description</label>
+                        <textarea onchange="updateTask(${t.id}, 'desc', this.value)" class="w-full border rounded-lg p-3 text-sm h-32" placeholder="Task notes...">${t.desc}</textarea>
+                    </div>
+                    <button onclick="deleteTask(${t.id})" class="text-red-500 text-xs font-bold hover:underline">Delete Task</button>
+                </div>
+            `;
+            document.getElementById('taskOverlay').classList.remove('hidden');
+            detail.classList.remove('translate-x-full');
+        }
+
+        function updateTask(tid, field, val) {
+            const p = state.projects.find(x => x.id === state.activeProjectId);
+            const t = p.tasks.find(x => x.id === tid);
+            t[field] = val;
             sync();
         }
 
-        // UI HELPERS
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function deleteTask(tid) {
+            const p = state.projects.find(x => x.id === state.activeProjectId);
+            p.tasks = p.tasks.filter(t => t.id !== tid);
+            closeTaskDetail();
+            sync();
+        }
 
-        // RENDER ENGINE
+        function closeTaskDetail() {
+            document.getElementById('taskOverlay').classList.add('hidden');
+            document.getElementById('taskDetail').classList.add('translate-x-full');
+        }
+
         function render() {
-            const viewport = document.getElementById('main-viewport');
-            const title = document.getElementById('current-view-title');
+            const view = document.getElementById('viewport');
+            const title = document.getElementById('view-title');
 
-            if (state.view === 'home') {
-                title.innerText = "Dashboard Overview";
-                viewport.innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                            <p class="text-slate-500 text-sm font-semibold uppercase">Total Projects</p>
-                            <h3 class="text-3xl font-bold text-slate-800">${state.projects.length}</h3>
+            if (state.activeView === 'home') {
+                title.innerText = "Global Dashboard";
+                view.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-white p-6 rounded-2xl border">
+                            <p class="text-xs font-bold text-slate-400 uppercase mb-1">Active Projects</p>
+                            <h3 class="text-3xl font-bold">${state.projects.length}</h3>
                         </div>
-                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                            <p class="text-slate-500 text-sm font-semibold uppercase">Active Tasks</p>
-                            <h3 class="text-3xl font-bold text-indigo-600">${state.projects.reduce((a,p)=>a+p.tasks.filter(t=>t.status!=='done').length,0)}</h3>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                            <p class="text-slate-500 text-sm font-semibold uppercase">Completed</p>
-                            <h3 class="text-3xl font-bold text-emerald-500">${state.projects.reduce((a,p)=>a+p.tasks.filter(t=>t.status==='done').length,0)}</h3>
+                        <div class="bg-white p-6 rounded-2xl border">
+                            <p class="text-xs font-bold text-slate-400 uppercase mb-1">Total Tasks</p>
+                            <h3 class="text-3xl font-bold text-indigo-600">${state.projects.reduce((a,p)=>a+p.tasks.length, 0)}</h3>
                         </div>
                     </div>
-                `;
-            }
-
-            if (state.view === 'projects') {
-                title.innerText = "All Projects";
-                viewport.innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <h3 class="font-bold text-slate-800 mb-4">Jump Back In</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         ${state.projects.map(p => `
-                            <div onclick="openProject(${p.id})" class="project-card bg-white p-6 rounded-xl border border-slate-200 shadow-sm cursor-pointer transition-all">
-                                <div class="flex justify-between items-start mb-4">
-                                    <h4 class="font-bold text-slate-800">${p.name}</h4>
-                                    <span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">${p.status}</span>
-                                </div>
-                                <p class="text-sm text-slate-500 mb-6 line-clamp-2">${p.desc || 'No description provided.'}</p>
-                                <div class="flex items-center justify-between border-t pt-4">
-                                    <span class="text-xs text-slate-400"><i class="far fa-calendar mr-1"></i> ${p.created}</span>
-                                    <span class="text-xs font-bold text-indigo-600">${p.tasks.length} Tasks</span>
-                                </div>
+                            <div onclick="openProject(${p.id})" class="bg-white p-4 rounded-xl border border-transparent hover:border-indigo-500 cursor-pointer shadow-sm flex justify-between items-center transition-all">
+                                <div><p class="font-bold">${p.name}</p><p class="text-xs text-slate-400">${p.tasks.length} Tasks</p></div>
+                                <i class="fas fa-chevron-right text-slate-300"></i>
                             </div>
-                        `).join('') || '<div class="col-span-full text-center py-20 text-slate-400">No projects yet. Create one to get started!</div>'}
+                        `).join('')}
                     </div>
                 `;
             }
 
-            if (state.view === 'project-detail') {
-                const p = state.projects.find(x => x.id === state.currentProject);
+            if (state.activeView === 'project-detail') {
+                const p = state.projects.find(x => x.id === state.activeProjectId);
                 title.innerText = p.name;
-                viewport.innerHTML = `
-                    <div class="flex gap-8 border-b border-slate-200 mb-6">
-                        <button class="tab-btn active pb-3 font-semibold text-sm px-2">Task List</button>
-                        <button class="tab-btn pb-3 font-semibold text-sm px-2 text-slate-400">Kanban</button>
-                        <button class="tab-btn pb-3 font-semibold text-sm px-2 text-slate-400">Messages</button>
-                    </div>
-                    
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="font-bold text-slate-700">Project Tasks</h3>
-                        <button onclick="addTask(${p.id})" class="text-sm bg-indigo-50 text-indigo-600 px-4 py-2 rounded-lg font-bold hover:bg-indigo-100">
-                            + Add Task
-                        </button>
-                    </div>
+                
+                document.querySelectorAll('#project-tabs button').forEach(b => b.className = "h-full px-2 text-sm font-bold text-slate-400");
+                document.getElementById(`tab-${state.activeTab}`).className = "tab-active h-full px-2 text-sm font-bold";
 
-                    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[11px] font-bold">
-                                <tr>
-                                    <th class="px-6 py-3">Task Name</th>
-                                    <th class="px-6 py-3">Status</th>
-                                    <th class="px-6 py-3">Priority</th>
-                                    <th class="px-6 py-3 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100">
-                                ${p.tasks.map(t => `
-                                    <tr class="hover:bg-slate-50">
-                                        <td class="px-6 py-4 font-medium text-slate-800">${t.title}</td>
-                                        <td class="px-6 py-4">
-                                            <select onchange="updateTaskStatus(${p.id}, ${t.id}, this.value)" class="bg-transparent outline-none cursor-pointer font-semibold ${t.status === 'done' ? 'text-emerald-500' : 'text-amber-500'}">
-                                                <option value="todo" ${t.status === 'todo' ? 'selected' : ''}>To Do</option>
-                                                <option value="doing" ${t.status === 'doing' ? 'selected' : ''}>Doing</option>
-                                                <option value="done" ${t.status === 'done' ? 'selected' : ''}>Done</option>
-                                            </select>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <span class="px-2 py-1 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">${t.priority}</span>
-                                        </td>
-                                        <td class="px-6 py-4 text-right">
-                                            <button class="text-slate-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
-                                        </td>
+                if(state.activeTab === 'list') {
+                    view.innerHTML = `
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-bold text-slate-800">Task List</h3>
+                            <button onclick="addTask()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold">+ New Task</button>
+                        </div>
+                        <div class="bg-white rounded-2xl border overflow-hidden">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 border-b text-[10px] font-bold text-slate-400 uppercase">
+                                    <tr>
+                                        <th class="px-6 py-4">Status</th>
+                                        <th class="px-6 py-4">Task</th>
+                                        <th class="px-6 py-4">Assignee</th>
+                                        <th class="px-6 py-4">Timeline</th>
                                     </tr>
-                                `).join('') || '<tr><td colspan="4" class="text-center py-10 text-slate-400">No tasks yet.</td></tr>'}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    ${p.tasks.map(t => `
+                                        <tr onclick="openTaskDetail(${t.id})" class="hover:bg-slate-50 cursor-pointer transition-all">
+                                            <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">${t.status}</span></td>
+                                            <td class="px-6 py-4 font-bold text-slate-700">${t.title}</td>
+                                            <td class="px-6 py-4 text-slate-500">${t.assignee}</td>
+                                            <td class="px-6 py-4 text-xs text-slate-400 font-medium">${t.start} — ${t.end}</td>
+                                        </tr>
+                                    `).join('') || '<tr><td colspan="4" class="text-center py-20 text-slate-300">No tasks in this project.</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                } else {
+                    renderGantt(p);
+                }
             }
         }
 
-        // INITIAL LOAD
+        function renderGantt(project) {
+            const view = document.getElementById('viewport');
+            if(!project.tasks.length) {
+                view.innerHTML = `<div class="text-center py-20 text-slate-400">Add tasks with start/end dates to view Gantt</div>`;
+                return;
+            }
+
+            // Calculate Date range
+            const startDates = project.tasks.map(t => new Date(t.start));
+            const endDates = project.tasks.map(t => new Date(t.end));
+            const minDate = new Date(Math.min(...startDates));
+            const maxDate = new Date(Math.max(...endDates));
+            maxDate.setDate(maxDate.getDate() + 5); // Add buffer
+
+            const totalDays = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24));
+            const dayWidth = 40;
+
+            let dateHeaders = "";
+            for(let i=0; i<totalDays; i++) {
+                const d = new Date(minDate);
+                d.setDate(d.getDate() + i);
+                dateHeaders += `<div class="shrink-0 border-r text-[9px] font-bold text-slate-400 text-center" style="width:${dayWidth}px">${d.getDate()}/${d.getMonth()+1}</div>`;
+            }
+
+            view.innerHTML = `
+                <div class="bg-white rounded-2xl border overflow-hidden flex flex-col h-full shadow-sm">
+                    <div class="flex border-b bg-slate-50 sticky top-0 z-10">
+                        <div class="w-64 border-r p-4 font-bold text-xs text-slate-500 uppercase">Task Title</div>
+                        <div class="flex-1 overflow-x-auto custom-scroll flex items-end pb-2">
+                            ${dateHeaders}
+                        </div>
+                    </div>
+                    <div class="flex-1 overflow-y-auto custom-scroll">
+                        ${project.tasks.map(t => {
+                            const taskStart = new Date(t.start);
+                            const taskEnd = new Date(t.end);
+                            const leftOffset = Math.ceil((taskStart - minDate) / (1000 * 60 * 60 * 24)) * dayWidth;
+                            const width = (Math.ceil((taskEnd - taskStart) / (1000 * 60 * 60 * 24)) + 1) * dayWidth;
+
+                            return `
+                                <div class="flex gantt-row border-b group">
+                                    <div class="w-64 shrink-0 border-r p-4 truncate text-sm font-bold text-slate-700">${t.title}</div>
+                                    <div class="flex-1 relative overflow-x-hidden min-h-[50px] bg-slate-50/30">
+                                        <div onclick="openTaskDetail(${t.id})" class="absolute top-3 h-6 bg-indigo-500 rounded-full shadow-lg cursor-pointer hover:bg-indigo-400 transition-colors flex items-center px-3" style="left:${leftOffset}px; width:${width}px">
+                                            <span class="text-[9px] text-white font-bold truncate">${t.assignee}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
         render();
     </script>
 </body>

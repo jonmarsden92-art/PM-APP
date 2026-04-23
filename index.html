@@ -9,10 +9,12 @@
 
 <style>
 body { font-family: system-ui; }
-.btn { padding:8px; border-radius:6px; cursor:pointer; }
-.btn:hover { opacity:0.9; }
-.nav { display:block; width:100%; text-align:left; padding:8px; border-radius:6px; }
+.nav { padding:10px; border-radius:6px; display:block; cursor:pointer; }
 .nav:hover { background:#374151; }
+.active { background:#4f46e5; }
+.card { background:white; padding:16px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+.column { min-height:300px; background:#f3f4f6; padding:10px; border-radius:8px; }
+.task { background:white; padding:8px; border-radius:6px; margin-bottom:8px; cursor:grab; }
 </style>
 </head>
 
@@ -20,45 +22,40 @@ body { font-family: system-ui; }
 
 <div class="flex min-h-screen">
 
-  <!-- Sidebar -->
-  <aside class="w-64 bg-gray-900 text-white p-4 flex flex-col">
-    <h1 class="text-xl font-bold mb-6">FluxForge</h1>
+<!-- SIDEBAR -->
+<aside class="w-64 bg-gray-900 text-white p-4 flex flex-col">
+  <h1 class="text-xl font-bold mb-6">FluxForge</h1>
 
-    <nav class="space-y-2">
-      <button class="nav" onclick="showDashboard()">Dashboard</button>
-      <button class="nav" onclick="showProjects()">Projects</button>
-      <button class="nav" onclick="showKanban()">Kanban</button>
-    </nav>
+  <div class="space-y-2">
+    <div id="nav-dashboard" class="nav" onclick="nav('dashboard')">Dashboard</div>
+    <div id="nav-projects" class="nav" onclick="nav('projects')">Projects</div>
+    <div id="nav-kanban" class="nav" onclick="nav('kanban')">Kanban</div>
+  </div>
 
-    <button onclick="openModal()" class="mt-auto bg-blue-500 py-2 rounded btn">
-      + New Project
-    </button>
+  <button onclick="openModal()" class="mt-auto bg-indigo-600 py-2 rounded">
+    + New Project
+  </button>
+</aside>
 
-    <button onclick="exportData()" class="mt-2 bg-gray-700 py-2 rounded btn">Export</button>
-    <button onclick="importData()" class="mt-2 bg-gray-700 py-2 rounded btn">Import</button>
-  </aside>
-
-  <!-- Main -->
-  <main class="flex-1 p-6">
-    <h1 id="title" class="text-2xl font-bold mb-6"></h1>
-    <div id="content"></div>
-  </main>
+<!-- MAIN -->
+<main class="flex-1 p-6">
+  <h1 id="title" class="text-2xl font-bold mb-6"></h1>
+  <div id="content"></div>
+</main>
 
 </div>
 
-<!-- Modal -->
+<!-- MODAL -->
 <div id="modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center">
   <div class="bg-white p-6 rounded w-96">
     <h2 class="font-bold mb-4">New Project</h2>
 
-    <input id="project-name" class="w-full border p-2 mb-3" placeholder="Name">
-    <textarea id="project-desc" class="w-full border p-2 mb-3" placeholder="Description"></textarea>
+    <input id="name" class="w-full border p-2 mb-3" placeholder="Name">
+    <textarea id="desc" class="w-full border p-2 mb-3" placeholder="Description"></textarea>
 
     <div class="flex justify-end gap-2">
       <button onclick="closeModal()">Cancel</button>
-      <button onclick="saveProject()" class="bg-blue-500 text-white px-4 py-2 rounded">
-        Save
-      </button>
+      <button onclick="saveProject()" class="bg-indigo-600 text-white px-4 py-2 rounded">Save</button>
     </div>
   </div>
 </div>
@@ -77,164 +74,180 @@ window.onload = () => {
 
 /* STORAGE */
 function load() {
-  const data = localStorage.getItem("fluxforge");
+  const data = localStorage.getItem("fluxforge_pro");
   if (data) projects = JSON.parse(data);
 }
 
 function save() {
-  localStorage.setItem("fluxforge", JSON.stringify(projects));
+  localStorage.setItem("fluxforge_pro", JSON.stringify(projects));
 }
 
-/* NAVIGATION */
-function showDashboard() {
-  view = "dashboard";
-  render();
-}
-
-function showProjects() {
-  view = "projects";
-  render();
-}
-
-function showKanban() {
-  view = "kanban";
+/* NAV */
+function nav(v) {
+  view = v;
   render();
 }
 
 /* RENDER */
 function render() {
-  if (view === "dashboard") renderDashboard();
-  if (view === "projects") renderProjects();
-  if (view === "project") renderProject();
-  if (view === "kanban") renderKanban();
+  setActiveNav();
+
+  if (view === "dashboard") dashboard();
+  if (view === "projects") projectsView();
+  if (view === "project") projectView();
+  if (view === "kanban") kanbanView();
+}
+
+/* NAV UI */
+function setActiveNav() {
+  ["dashboard","projects","kanban"].forEach(id => {
+    document.getElementById("nav-"+id).classList.remove("active");
+  });
+  document.getElementById("nav-"+view)?.classList.add("active");
 }
 
 /* DASHBOARD */
-function renderDashboard() {
-  document.getElementById("title").innerText = "Dashboard";
-  document.getElementById("content").innerHTML = `
-    <div class="bg-white p-6 rounded shadow">
-      <h2>Total Projects: ${projects.length}</h2>
+function dashboard() {
+  setTitle("Dashboard");
+
+  const totalTasks = projects.reduce((sum,p)=>sum+p.tasks.length,0);
+
+  setContent(`
+    <div class="grid grid-cols-3 gap-4">
+      <div class="card">Projects: ${projects.length}</div>
+      <div class="card">Tasks: ${totalTasks}</div>
+      <div class="card">Productivity: 🚀</div>
     </div>
-  `;
+  `);
 }
 
 /* PROJECT LIST */
-function renderProjects() {
-  document.getElementById("title").innerText = "Projects";
+function projectsView() {
+  setTitle("Projects");
 
   if (!projects.length) {
-    document.getElementById("content").innerHTML = "<p>No projects yet</p>";
+    setContent(`<p>No projects yet</p>`);
     return;
   }
 
-  document.getElementById("content").innerHTML = `
+  setContent(`
     <div class="grid gap-4">
       ${projects.map(p => `
-        <div class="bg-white p-4 rounded shadow">
+        <div class="card">
           <h3 class="font-bold">${p.name}</h3>
           <p class="text-sm">${p.desc}</p>
-          <button onclick="openProject('${p.id}')" class="text-blue-500 mt-2">
-            Open
-          </button>
+          <button onclick="openProject('${p.id}')" class="text-indigo-600 mt-2">Open</button>
         </div>
       `).join("")}
     </div>
-  `;
+  `);
 }
 
-/* PROJECT VIEW */
+/* PROJECT DETAIL */
 function openProject(id) {
   currentProject = id;
   view = "project";
   render();
 }
 
-function renderProject() {
-  const p = projects.find(x => x.id === currentProject);
+function projectView() {
+  const p = projects.find(x=>x.id===currentProject);
 
-  document.getElementById("title").innerText = p.name;
+  setTitle(p.name);
 
-  document.getElementById("content").innerHTML = `
-    <input id="task-input" class="border p-2 mb-3" placeholder="New task">
-    <button onclick="addTask()" class="bg-blue-500 text-white px-3 py-1 rounded">
-      Add Task
-    </button>
+  setContent(`
+    <input id="taskInput" class="border p-2 mb-3" placeholder="New task">
+    <button onclick="addTask()" class="bg-indigo-600 text-white px-3 py-1 rounded">Add</button>
 
-    <ul class="mt-4 space-y-2">
-      ${p.tasks.map(t => `<li class="bg-white p-2 rounded shadow">${t}</li>`).join("")}
+    <ul class="mt-4">
+      ${p.tasks.map(t=>`<li>${t.title} (${t.status})</li>`).join("")}
     </ul>
-  `;
+  `);
 }
 
 /* TASK */
 function addTask() {
-  const val = document.getElementById("task-input").value;
+  const val = document.getElementById("taskInput").value;
   if (!val) return;
 
-  const p = projects.find(x => x.id === currentProject);
-  p.tasks.push(val);
+  const p = projects.find(x=>x.id===currentProject);
+
+  p.tasks.push({
+    id: Date.now(),
+    title: val,
+    status: "todo"
+  });
 
   save();
-  renderProject();
+  projectView();
 }
 
 /* KANBAN */
-function renderKanban() {
-  document.getElementById("title").innerText = "Kanban";
-  document.getElementById("content").innerHTML = `
+function kanbanView() {
+  setTitle("Kanban");
+
+  const tasks = projects.flatMap(p=>p.tasks);
+
+  setContent(`
     <div class="grid grid-cols-3 gap-4">
-      <div class="bg-white p-4 rounded">To Do</div>
-      <div class="bg-white p-4 rounded">Doing</div>
-      <div class="bg-white p-4 rounded">Done</div>
+      ${["todo","doing","done"].map(col => `
+        <div class="column" ondragover="allowDrop(event)" ondrop="drop(event,'${col}')">
+          <h3 class="font-bold mb-2">${col.toUpperCase()}</h3>
+          ${tasks.filter(t=>t.status===col).map(t=>`
+            <div class="task" draggable="true" ondragstart="drag(event,'${t.id}')">
+              ${t.title}
+            </div>
+          `).join("")}
+        </div>
+      `).join("")}
     </div>
-  `;
+  `);
+}
+
+/* DRAG */
+let draggedId = null;
+
+function drag(e,id){ draggedId = id; }
+function allowDrop(e){ e.preventDefault(); }
+
+function drop(e,status){
+  e.preventDefault();
+  projects.forEach(p=>{
+    p.tasks.forEach(t=>{
+      if(t.id==draggedId){ t.status=status; }
+    });
+  });
+  save();
+  kanbanView();
 }
 
 /* MODAL */
-function openModal() {
-  document.getElementById("modal").classList.remove("hidden");
-}
-
-function closeModal() {
-  document.getElementById("modal").classList.add("hidden");
-}
+function openModal(){ document.getElementById("modal").classList.remove("hidden"); }
+function closeModal(){ document.getElementById("modal").classList.add("hidden"); }
 
 /* CREATE PROJECT */
-function saveProject() {
-  const name = document.getElementById("project-name").value;
-  const desc = document.getElementById("project-desc").value;
+function saveProject(){
+  const name = document.getElementById("name").value;
+  const desc = document.getElementById("desc").value;
 
-  if (!name) return;
+  if(!name) return;
 
   projects.push({
     id: Date.now().toString(),
     name,
     desc,
-    tasks: []
+    tasks:[]
   });
 
   save();
   closeModal();
-  showProjects();
+  nav("projects");
 }
 
-/* EXPORT */
-function exportData() {
-  const data = JSON.stringify(projects);
-  navigator.clipboard.writeText(data);
-  alert("Copied to clipboard");
-}
+/* UTILS */
+function setTitle(t){ document.getElementById("title").innerText=t; }
+function setContent(html){ document.getElementById("content").innerHTML=html; }
 
-/* IMPORT */
-function importData() {
-  const data = prompt("Paste your data");
-  if (!data) return;
-
-  projects = JSON.parse(data);
-  save();
-  render();
-}
 </script>
 
 </body>

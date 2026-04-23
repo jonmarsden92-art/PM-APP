@@ -3,18 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FluxForge</title>
+<title>FluxForge Pro</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
 body { font-family: system-ui; }
-.nav { padding:10px; border-radius:6px; display:block; cursor:pointer; }
+.nav { padding:10px; border-radius:6px; cursor:pointer; }
 .nav:hover { background:#374151; }
 .active { background:#4f46e5; }
 .card { background:white; padding:16px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
 .column { min-height:300px; background:#f3f4f6; padding:10px; border-radius:8px; }
 .task { background:white; padding:8px; border-radius:6px; margin-bottom:8px; cursor:grab; }
+.bar { height:14px; background:#6366f1; border-radius:4px; }
 </style>
 </head>
 
@@ -30,6 +31,7 @@ body { font-family: system-ui; }
     <div id="nav-dashboard" class="nav" onclick="nav('dashboard')">Dashboard</div>
     <div id="nav-projects" class="nav" onclick="nav('projects')">Projects</div>
     <div id="nav-kanban" class="nav" onclick="nav('kanban')">Kanban</div>
+    <div id="nav-gantt" class="nav" onclick="nav('gantt')">Gantt</div>
   </div>
 
   <button onclick="openModal()" class="mt-auto bg-indigo-600 py-2 rounded">
@@ -61,7 +63,6 @@ body { font-family: system-ui; }
 </div>
 
 <script>
-/* STATE */
 let projects = [];
 let view = "dashboard";
 let currentProject = null;
@@ -73,69 +74,66 @@ window.onload = () => {
 };
 
 /* STORAGE */
-function load() {
-  const data = localStorage.getItem("fluxforge_pro");
-  if (data) projects = JSON.parse(data);
+function load(){
+  const d = localStorage.getItem("fluxforge_full");
+  if(d) projects = JSON.parse(d);
 }
-
-function save() {
-  localStorage.setItem("fluxforge_pro", JSON.stringify(projects));
+function save(){
+  localStorage.setItem("fluxforge_full", JSON.stringify(projects));
 }
 
 /* NAV */
-function nav(v) {
+function nav(v){
   view = v;
   render();
 }
 
 /* RENDER */
-function render() {
-  setActiveNav();
+function render(){
+  setActive();
 
-  if (view === "dashboard") dashboard();
-  if (view === "projects") projectsView();
-  if (view === "project") projectView();
-  if (view === "kanban") kanbanView();
+  if(view==="dashboard") dashboard();
+  if(view==="projects") projectsView();
+  if(view==="project") projectView();
+  if(view==="kanban") kanbanView();
+  if(view==="gantt") ganttView();
 }
 
 /* NAV UI */
-function setActiveNav() {
-  ["dashboard","projects","kanban"].forEach(id => {
-    document.getElementById("nav-"+id).classList.remove("active");
+function setActive(){
+  ["dashboard","projects","kanban","gantt"].forEach(n=>{
+    document.getElementById("nav-"+n).classList.remove("active");
   });
   document.getElementById("nav-"+view)?.classList.add("active");
 }
 
 /* DASHBOARD */
-function dashboard() {
+function dashboard(){
   setTitle("Dashboard");
-
-  const totalTasks = projects.reduce((sum,p)=>sum+p.tasks.length,0);
-
   setContent(`
     <div class="grid grid-cols-3 gap-4">
       <div class="card">Projects: ${projects.length}</div>
-      <div class="card">Tasks: ${totalTasks}</div>
-      <div class="card">Productivity: 🚀</div>
+      <div class="card">Tasks: ${projects.reduce((a,p)=>a+p.tasks.length,0)}</div>
+      <div class="card">Status: Active</div>
     </div>
   `);
 }
 
-/* PROJECT LIST */
-function projectsView() {
+/* PROJECTS */
+function projectsView(){
   setTitle("Projects");
 
-  if (!projects.length) {
-    setContent(`<p>No projects yet</p>`);
+  if(!projects.length){
+    setContent("<p>No projects yet</p>");
     return;
   }
 
   setContent(`
     <div class="grid gap-4">
-      ${projects.map(p => `
+      ${projects.map(p=>`
         <div class="card">
           <h3 class="font-bold">${p.name}</h3>
-          <p class="text-sm">${p.desc}</p>
+          <p>${p.desc}</p>
           <button onclick="openProject('${p.id}')" class="text-indigo-600 mt-2">Open</button>
         </div>
       `).join("")}
@@ -143,14 +141,14 @@ function projectsView() {
   `);
 }
 
-/* PROJECT DETAIL */
-function openProject(id) {
+function openProject(id){
   currentProject = id;
-  view = "project";
+  view="project";
   render();
 }
 
-function projectView() {
+/* PROJECT DETAIL */
+function projectView(){
   const p = projects.find(x=>x.id===currentProject);
 
   setTitle(p.name);
@@ -159,44 +157,61 @@ function projectView() {
     <input id="taskInput" class="border p-2 mb-3" placeholder="New task">
     <button onclick="addTask()" class="bg-indigo-600 text-white px-3 py-1 rounded">Add</button>
 
-    <ul class="mt-4">
-      ${p.tasks.map(t=>`<li>${t.title} (${t.status})</li>`).join("")}
-    </ul>
+    <div class="mt-4 space-y-2">
+      ${p.tasks.map(t=>`
+        <div class="card">
+          <input value="${t.title}" onchange="updateTask('${t.id}','title',this.value)" class="border p-1 w-full mb-2"/>
+          <div class="flex gap-2">
+            <input type="date" value="${t.start}" onchange="updateTask('${t.id}','start',this.value)">
+            <input type="date" value="${t.end}" onchange="updateTask('${t.id}','end',this.value)">
+          </div>
+        </div>
+      `).join("")}
+    </div>
   `);
 }
 
 /* TASK */
-function addTask() {
+function addTask(){
   const val = document.getElementById("taskInput").value;
-  if (!val) return;
+  if(!val) return;
 
   const p = projects.find(x=>x.id===currentProject);
 
   p.tasks.push({
     id: Date.now(),
     title: val,
-    status: "todo"
+    status: "todo",
+    start: new Date().toISOString().slice(0,10),
+    end: new Date(Date.now()+86400000).toISOString().slice(0,10)
   });
 
   save();
   projectView();
 }
 
+function updateTask(id,field,value){
+  const p = projects.find(x=>x.id===currentProject);
+  const t = p.tasks.find(x=>x.id==id);
+  t[field]=value;
+  save();
+}
+
 /* KANBAN */
-function kanbanView() {
+let dragged = null;
+
+function kanbanView(){
   setTitle("Kanban");
 
   const tasks = projects.flatMap(p=>p.tasks);
 
   setContent(`
     <div class="grid grid-cols-3 gap-4">
-      ${["todo","doing","done"].map(col => `
-        <div class="column" ondragover="allowDrop(event)" ondrop="drop(event,'${col}')">
-          <h3 class="font-bold mb-2">${col.toUpperCase()}</h3>
-          ${tasks.filter(t=>t.status===col).map(t=>`
-            <div class="task" draggable="true" ondragstart="drag(event,'${t.id}')">
-              ${t.title}
-            </div>
+      ${["todo","doing","done"].map(s=>`
+        <div class="column" ondragover="event.preventDefault()" ondrop="drop('${s}')">
+          <h3>${s}</h3>
+          ${tasks.filter(t=>t.status===s).map(t=>`
+            <div class="task" draggable="true" ondragstart="drag('${t.id}')">${t.title}</div>
           `).join("")}
         </div>
       `).join("")}
@@ -204,21 +219,50 @@ function kanbanView() {
   `);
 }
 
-/* DRAG */
-let draggedId = null;
+function drag(id){ dragged=id; }
 
-function drag(e,id){ draggedId = id; }
-function allowDrop(e){ e.preventDefault(); }
-
-function drop(e,status){
-  e.preventDefault();
+function drop(status){
   projects.forEach(p=>{
     p.tasks.forEach(t=>{
-      if(t.id==draggedId){ t.status=status; }
+      if(t.id==dragged) t.status=status;
     });
   });
   save();
   kanbanView();
+}
+
+/* GANTT */
+function ganttView(){
+  setTitle("Gantt");
+
+  const tasks = projects.flatMap(p=>p.tasks);
+  if(!tasks.length){
+    setContent("<p>No tasks</p>");
+    return;
+  }
+
+  const start = new Date(Math.min(...tasks.map(t=>new Date(t.start))));
+  const end = new Date(Math.max(...tasks.map(t=>new Date(t.end))));
+  const dayMs = 86400000;
+
+  setContent(`
+    <div class="space-y-3">
+      ${tasks.map(t=>{
+        const offset = (new Date(t.start)-start)/dayMs;
+        const duration = (new Date(t.end)-new Date(t.start))/dayMs + 1;
+
+        return `
+          <div>
+            <div class="text-sm">${t.title}</div>
+            <div class="bg-gray-200 h-4 relative rounded">
+              <div class="bar absolute"
+                   style="left:${offset*20}px;width:${duration*20}px"></div>
+            </div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `);
 }
 
 /* MODAL */
@@ -246,7 +290,7 @@ function saveProject(){
 
 /* UTILS */
 function setTitle(t){ document.getElementById("title").innerText=t; }
-function setContent(html){ document.getElementById("content").innerHTML=html; }
+function setContent(h){ document.getElementById("content").innerHTML=h; }
 
 </script>
 

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FluxForge</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -16,47 +16,70 @@
 
 <div class="flex min-h-screen">
 
-  <!-- Sidebar -->
-  <aside class="w-64 bg-gray-900 text-white p-4">
+  <!-- SIDEBAR -->
+  <aside class="w-64 bg-gray-900 text-white p-4 flex flex-col">
     <h1 class="text-xl font-bold mb-6">FluxForge</h1>
 
     <nav class="space-y-2">
-      <button onclick="app.showDashboard()" class="block w-full text-left px-3 py-2 hover:bg-gray-700 rounded">Dashboard</button>
-      <button onclick="app.showProjects()" class="block w-full text-left px-3 py-2 hover:bg-gray-700 rounded">Projects</button>
+      <button onclick="app.showDashboard()" class="nav-btn">Dashboard</button>
+      <button onclick="app.showProjects()" class="nav-btn">Projects</button>
+      <button onclick="app.showKanban()" class="nav-btn">Kanban</button>
     </nav>
 
-    <button onclick="app.openNewProject()" class="mt-6 w-full bg-blue-500 py-2 rounded">
+    <button onclick="app.openProjectModal()" class="mt-auto bg-blue-500 py-2 rounded">
       + New Project
     </button>
   </aside>
 
-  <!-- Main -->
+  <!-- MAIN -->
   <main class="flex-1 p-6">
 
-    <h1 id="page-title" class="text-2xl font-bold mb-6">Dashboard</h1>
+    <!-- HEADER -->
+    <div class="flex justify-between items-center mb-6">
+      <h1 id="page-title" class="text-2xl font-bold">Dashboard</h1>
+    </div>
 
+    <!-- CONTENT -->
     <div id="content"></div>
 
   </main>
 
 </div>
 
-<!-- Modal -->
-<div id="modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center">
+<!-- PROJECT MODAL -->
+<div id="project-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center">
   <div class="bg-white p-6 rounded w-96">
     <h2 class="text-lg font-bold mb-4">New Project</h2>
 
     <input id="project-name" placeholder="Project name"
            class="w-full border p-2 mb-4"/>
 
+    <textarea id="project-desc" placeholder="Description"
+              class="w-full border p-2 mb-4"></textarea>
+
     <div class="flex justify-end gap-2">
       <button onclick="app.closeModal()">Cancel</button>
-      <button onclick="app.saveProject()" class="bg-blue-500 text-white px-4 py-2 rounded">Save</button>
+      <button onclick="app.saveProject()" class="bg-blue-500 text-white px-4 py-2 rounded">
+        Save
+      </button>
     </div>
   </div>
 </div>
 
 <script src="app.js"></script>
+
+<style>
+.nav-btn {
+  display:block;
+  width:100%;
+  text-align:left;
+  padding:8px;
+  border-radius:6px;
+}
+.nav-btn:hover {
+  background:#374151;
+}
+</style>
 
 </body>
 </html>

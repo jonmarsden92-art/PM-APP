@@ -1,298 +1,263 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FluxForge Pro</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-
-<style>
-body { font-family: system-ui; }
-.nav { padding:10px; border-radius:6px; cursor:pointer; }
-.nav:hover { background:#374151; }
-.active { background:#4f46e5; }
-.card { background:white; padding:16px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
-.column { min-height:300px; background:#f3f4f6; padding:10px; border-radius:8px; }
-.task { background:white; padding:8px; border-radius:6px; margin-bottom:8px; cursor:grab; }
-.bar { height:14px; background:#6366f1; border-radius:4px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FluxForge Engine | Collaborative OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; overflow: hidden; }
+        .sidebar-item { transition: all 0.2s; border-left: 4px solid transparent; }
+        .sidebar-item.active { background: #1e293b; border-left-color: #6366f1; color: white; }
+        .kanban-column { min-height: calc(100vh - 250px); }
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+        .task-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
 </head>
+<body class="bg-slate-50 text-slate-900">
 
-<body class="bg-gray-100">
+<div class="flex h-screen w-full">
+    <aside class="w-72 bg-slate-900 text-slate-400 flex flex-col border-r border-slate-800">
+        <div class="p-6 flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+                <i class="fas fa-layer-group text-xl"></i>
+            </div>
+            <span class="text-white font-bold text-xl tracking-tight">FluxForge</span>
+        </div>
 
-<div class="flex min-h-screen">
+        <nav class="flex-1 px-4 space-y-1">
+            <div onclick="setView('dashboard')" id="nav-dashboard" class="sidebar-item active flex items-center gap-3 p-3 rounded-md cursor-pointer hover:text-white">
+                <i class="fas fa-chart-pie w-5"></i> Dashboard
+            </div>
+            <div onclick="setView('kanban')" id="nav-kanban" class="sidebar-item flex items-center gap-3 p-3 rounded-md cursor-pointer hover:text-white">
+                <i class="fas fa-chalkboard w-5"></i> Project Board
+            </div>
+            <div onclick="setView('team')" id="nav-team" class="sidebar-item flex items-center gap-3 p-3 rounded-md cursor-pointer hover:text-white">
+                <i class="fas fa-users w-5"></i> Team Members
+            </div>
+        </nav>
 
-<!-- SIDEBAR -->
-<aside class="w-64 bg-gray-900 text-white p-4 flex flex-col">
-  <h1 class="text-xl font-bold mb-6">FluxForge</h1>
+        <div class="p-4 mt-auto">
+            <button onclick="toggleModal('projectModal')" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-semibold shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2">
+                <i class="fas fa-plus-circle"></i> New Task
+            </button>
+        </div>
+    </aside>
 
-  <div class="space-y-2">
-    <div id="nav-dashboard" class="nav" onclick="nav('dashboard')">Dashboard</div>
-    <div id="nav-projects" class="nav" onclick="nav('projects')">Projects</div>
-    <div id="nav-kanban" class="nav" onclick="nav('kanban')">Kanban</div>
-    <div id="nav-gantt" class="nav" onclick="nav('gantt')">Gantt</div>
-  </div>
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+            <h2 id="view-title" class="text-2xl font-bold text-slate-800">Workspace</h2>
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" placeholder="Search tasks..." class="pl-10 pr-4 py-2 bg-slate-100 border-none rounded-full text-sm focus:ring-2 focus:ring-indigo-500 transition-all">
+                </div>
+                <div class="flex -space-x-2">
+                    <div class="w-8 h-8 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center text-[10px] text-white font-bold">JD</div>
+                    <div class="w-8 h-8 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-[10px] text-white font-bold">AS</div>
+                    <div class="w-8 h-8 rounded-full bg-amber-500 border-2 border-white flex items-center justify-center text-[10px] text-white font-bold">RK</div>
+                </div>
+            </div>
+        </header>
 
-  <button onclick="openModal()" class="mt-auto bg-indigo-600 py-2 rounded">
-    + New Project
-  </button>
-</aside>
-
-<!-- MAIN -->
-<main class="flex-1 p-6">
-  <h1 id="title" class="text-2xl font-bold mb-6"></h1>
-  <div id="content"></div>
-</main>
-
+        <section id="viewport" class="flex-1 p-8 overflow-y-auto">
+            </section>
+    </main>
 </div>
 
-<!-- MODAL -->
-<div id="modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center">
-  <div class="bg-white p-6 rounded w-96">
-    <h2 class="font-bold mb-4">New Project</h2>
-
-    <input id="name" class="w-full border p-2 mb-3" placeholder="Name">
-    <textarea id="desc" class="w-full border p-2 mb-3" placeholder="Description"></textarea>
-
-    <div class="flex justify-end gap-2">
-      <button onclick="closeModal()">Cancel</button>
-      <button onclick="saveProject()" class="bg-indigo-600 text-white px-4 py-2 rounded">Save</button>
+<div id="projectModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="text-xl font-bold">Create New Task</h3>
+            <button onclick="toggleModal('projectModal')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="p-6 space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">Task Name</label>
+                <input id="taskName" type="text" class="w-full border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Priority</label>
+                    <select id="taskPriority" class="w-full border border-slate-200 rounded-lg p-3 outline-none">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Assignee</label>
+                    <select id="taskUser" class="w-full border border-slate-200 rounded-lg p-3 outline-none">
+                        <option>John Doe</option>
+                        <option>Alice Smith</option>
+                        <option>Ryan King</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="createTask()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold mt-2 hover:bg-indigo-700 transition-colors">Launch Task</button>
+        </div>
     </div>
-  </div>
 </div>
 
 <script>
-let projects = [];
-let view = "dashboard";
-let currentProject = null;
+    // INITIAL DATA STATE
+    let tasks = JSON.parse(localStorage.getItem('ff_tasks')) || [
+        { id: 1, title: 'Refactor Auth API', priority: 'High', status: 'doing', user: 'JD' },
+        { id: 2, title: 'Onboard New Designers', priority: 'Low', status: 'todo', user: 'AS' },
+        { id: 3, title: 'Release v2.4.0', priority: 'Medium', status: 'done', user: 'RK' }
+    ];
 
-/* INIT */
-window.onload = () => {
-  load();
-  render();
-};
+    let currentView = 'dashboard';
 
-/* STORAGE */
-function load(){
-  const d = localStorage.getItem("fluxforge_full");
-  if(d) projects = JSON.parse(d);
-}
-function save(){
-  localStorage.setItem("fluxforge_full", JSON.stringify(projects));
-}
+    // CORE FUNCTIONS
+    function setView(view) {
+        currentView = view;
+        document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+        document.getElementById(`nav-${view}`).classList.add('active');
+        document.getElementById('view-title').innerText = view.charAt(0).toUpperCase() + view.slice(1);
+        render();
+    }
 
-/* NAV */
-function nav(v){
-  view = v;
-  render();
-}
+    function toggleModal(id) {
+        document.getElementById(id).classList.toggle('hidden');
+    }
 
-/* RENDER */
-function render(){
-  setActive();
+    function createTask() {
+        const title = document.getElementById('taskName').value;
+        const priority = document.getElementById('taskPriority').value;
+        const user = document.getElementById('taskUser').value.split(' ').map(n => n[0]).join('');
 
-  if(view==="dashboard") dashboard();
-  if(view==="projects") projectsView();
-  if(view==="project") projectView();
-  if(view==="kanban") kanbanView();
-  if(view==="gantt") ganttView();
-}
+        if(!title) return alert("Task name required!");
 
-/* NAV UI */
-function setActive(){
-  ["dashboard","projects","kanban","gantt"].forEach(n=>{
-    document.getElementById("nav-"+n).classList.remove("active");
-  });
-  document.getElementById("nav-"+view)?.classList.add("active");
-}
+        tasks.push({
+            id: Date.now(),
+            title,
+            priority,
+            status: 'todo',
+            user
+        });
 
-/* DASHBOARD */
-function dashboard(){
-  setTitle("Dashboard");
-  setContent(`
-    <div class="grid grid-cols-3 gap-4">
-      <div class="card">Projects: ${projects.length}</div>
-      <div class="card">Tasks: ${projects.reduce((a,p)=>a+p.tasks.length,0)}</div>
-      <div class="card">Status: Active</div>
-    </div>
-  `);
-}
+        saveAndRender();
+        toggleModal('projectModal');
+        document.getElementById('taskName').value = '';
+    }
 
-/* PROJECTS */
-function projectsView(){
-  setTitle("Projects");
+    function moveTask(id, newStatus) {
+        tasks = tasks.map(t => t.id == id ? {...t, status: newStatus} : t);
+        saveAndRender();
+    }
 
-  if(!projects.length){
-    setContent("<p>No projects yet</p>");
-    return;
-  }
+    function saveAndRender() {
+        localStorage.setItem('ff_tasks', JSON.stringify(tasks));
+        render();
+    }
 
-  setContent(`
-    <div class="grid gap-4">
-      ${projects.map(p=>`
-        <div class="card">
-          <h3 class="font-bold">${p.name}</h3>
-          <p>${p.desc}</p>
-          <button onclick="openProject('${p.id}')" class="text-indigo-600 mt-2">Open</button>
-        </div>
-      `).join("")}
-    </div>
-  `);
-}
+    // RENDER ENGINE
+    function render() {
+        const viewport = document.getElementById('viewport');
+        
+        if(currentView === 'dashboard') {
+            const counts = {
+                todo: tasks.filter(t => t.status === 'todo').length,
+                doing: tasks.filter(t => t.status === 'doing').length,
+                done: tasks.filter(t => t.status === 'done').length
+            };
 
-function openProject(id){
-  currentProject = id;
-  view="project";
-  render();
-}
+            viewport.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <p class="text-slate-500 text-sm font-medium">Pending Tasks</p>
+                        <h4 class="text-4xl font-bold mt-2 text-indigo-600">${counts.todo}</h4>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <p class="text-slate-500 text-sm font-medium">In Progress</p>
+                        <h4 class="text-4xl font-bold mt-2 text-amber-500">${counts.doing}</h4>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <p class="text-slate-500 text-sm font-medium">Completed</p>
+                        <h4 class="text-4xl font-bold mt-2 text-emerald-500">${counts.done}</h4>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-6 border border-slate-100">
+                    <h3 class="font-bold text-lg mb-4">Recent Activity</h3>
+                    <div class="space-y-4">
+                        ${tasks.slice(-3).reverse().map(t => `
+                            <div class="flex items-center gap-4 text-sm border-b border-slate-50 pb-3">
+                                <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs">${t.user}</div>
+                                <span>Created <strong>${t.title}</strong></span>
+                                <span class="ml-auto text-slate-400">Just now</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
 
-/* PROJECT DETAIL */
-function projectView(){
-  const p = projects.find(x=>x.id===currentProject);
+        if(currentView === 'kanban') {
+            viewport.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
+                    ${['todo', 'doing', 'done'].map(status => `
+                        <div class="kanban-column bg-slate-100/50 rounded-2xl p-4 border border-dashed border-slate-300" 
+                             ondragover="event.preventDefault()" 
+                             ondrop="moveTask(event.dataTransfer.getData('text'), '${status}')">
+                            <div class="flex items-center justify-between mb-4 px-2">
+                                <h3 class="font-bold uppercase text-xs tracking-widest text-slate-500">${status}</h3>
+                                <span class="bg-slate-200 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold">${tasks.filter(t=>t.status===status).length}</span>
+                            </div>
+                            <div class="space-y-3">
+                                ${tasks.filter(t => t.status === status).map(t => `
+                                    <div draggable="true" ondragstart="event.dataTransfer.setData('text', ${t.id})" 
+                                         class="task-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-grab active:cursor-grabbing transition-all">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <span class="text-[10px] font-bold px-2 py-1 rounded ${getPriorityClass(t.priority)}">${t.priority}</span>
+                                            <div class="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[8px] font-bold">${t.user}</div>
+                                        </div>
+                                        <p class="text-sm font-semibold text-slate-800">${t.title}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
 
-  setTitle(p.name);
+        if(currentView === 'team') {
+            viewport.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${['John Doe', 'Alice Smith', 'Ryan King'].map(name => `
+                        <div class="bg-white p-6 rounded-2xl border border-slate-100 text-center">
+                            <div class="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full mx-auto flex items-center justify-center text-2xl font-bold mb-4">
+                                ${name.split(' ').map(n=>n[0]).join('')}
+                            </div>
+                            <h3 class="font-bold text-lg">${name}</h3>
+                            <p class="text-slate-500 text-sm mb-4">Product Contributor</p>
+                            <div class="flex justify-center gap-2">
+                                <span class="px-3 py-1 bg-slate-100 rounded-full text-xs font-medium">Online</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+    }
 
-  setContent(`
-    <input id="taskInput" class="border p-2 mb-3" placeholder="New task">
-    <button onclick="addTask()" class="bg-indigo-600 text-white px-3 py-1 rounded">Add</button>
+    function getPriorityClass(p) {
+        if(p === 'High') return 'bg-red-100 text-red-600';
+        if(p === 'Medium') return 'bg-amber-100 text-amber-600';
+        return 'bg-emerald-100 text-emerald-600';
+    }
 
-    <div class="mt-4 space-y-2">
-      ${p.tasks.map(t=>`
-        <div class="card">
-          <input value="${t.title}" onchange="updateTask('${t.id}','title',this.value)" class="border p-1 w-full mb-2"/>
-          <div class="flex gap-2">
-            <input type="date" value="${t.start}" onchange="updateTask('${t.id}','start',this.value)">
-            <input type="date" value="${t.end}" onchange="updateTask('${t.id}','end',this.value)">
-          </div>
-        </div>
-      `).join("")}
-    </div>
-  `);
-}
-
-/* TASK */
-function addTask(){
-  const val = document.getElementById("taskInput").value;
-  if(!val) return;
-
-  const p = projects.find(x=>x.id===currentProject);
-
-  p.tasks.push({
-    id: Date.now(),
-    title: val,
-    status: "todo",
-    start: new Date().toISOString().slice(0,10),
-    end: new Date(Date.now()+86400000).toISOString().slice(0,10)
-  });
-
-  save();
-  projectView();
-}
-
-function updateTask(id,field,value){
-  const p = projects.find(x=>x.id===currentProject);
-  const t = p.tasks.find(x=>x.id==id);
-  t[field]=value;
-  save();
-}
-
-/* KANBAN */
-let dragged = null;
-
-function kanbanView(){
-  setTitle("Kanban");
-
-  const tasks = projects.flatMap(p=>p.tasks);
-
-  setContent(`
-    <div class="grid grid-cols-3 gap-4">
-      ${["todo","doing","done"].map(s=>`
-        <div class="column" ondragover="event.preventDefault()" ondrop="drop('${s}')">
-          <h3>${s}</h3>
-          ${tasks.filter(t=>t.status===s).map(t=>`
-            <div class="task" draggable="true" ondragstart="drag('${t.id}')">${t.title}</div>
-          `).join("")}
-        </div>
-      `).join("")}
-    </div>
-  `);
-}
-
-function drag(id){ dragged=id; }
-
-function drop(status){
-  projects.forEach(p=>{
-    p.tasks.forEach(t=>{
-      if(t.id==dragged) t.status=status;
-    });
-  });
-  save();
-  kanbanView();
-}
-
-/* GANTT */
-function ganttView(){
-  setTitle("Gantt");
-
-  const tasks = projects.flatMap(p=>p.tasks);
-  if(!tasks.length){
-    setContent("<p>No tasks</p>");
-    return;
-  }
-
-  const start = new Date(Math.min(...tasks.map(t=>new Date(t.start))));
-  const end = new Date(Math.max(...tasks.map(t=>new Date(t.end))));
-  const dayMs = 86400000;
-
-  setContent(`
-    <div class="space-y-3">
-      ${tasks.map(t=>{
-        const offset = (new Date(t.start)-start)/dayMs;
-        const duration = (new Date(t.end)-new Date(t.start))/dayMs + 1;
-
-        return `
-          <div>
-            <div class="text-sm">${t.title}</div>
-            <div class="bg-gray-200 h-4 relative rounded">
-              <div class="bar absolute"
-                   style="left:${offset*20}px;width:${duration*20}px"></div>
-            </div>
-          </div>
-        `;
-      }).join("")}
-    </div>
-  `);
-}
-
-/* MODAL */
-function openModal(){ document.getElementById("modal").classList.remove("hidden"); }
-function closeModal(){ document.getElementById("modal").classList.add("hidden"); }
-
-/* CREATE PROJECT */
-function saveProject(){
-  const name = document.getElementById("name").value;
-  const desc = document.getElementById("desc").value;
-
-  if(!name) return;
-
-  projects.push({
-    id: Date.now().toString(),
-    name,
-    desc,
-    tasks:[]
-  });
-
-  save();
-  closeModal();
-  nav("projects");
-}
-
-/* UTILS */
-function setTitle(t){ document.getElementById("title").innerText=t; }
-function setContent(h){ document.getElementById("content").innerHTML=h; }
-
+    // INIT
+    render();
 </script>
-
 </body>
 </html>

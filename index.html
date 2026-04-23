@@ -9,8 +9,10 @@
 
 <style>
 body { font-family: system-ui; }
-.nav-btn { padding:8px; border-radius:6px; display:block; width:100%; text-align:left; }
-.nav-btn:hover { background:#374151; }
+.btn { padding:8px; border-radius:6px; cursor:pointer; }
+.btn:hover { opacity:0.9; }
+.nav { display:block; width:100%; text-align:left; padding:8px; border-radius:6px; }
+.nav:hover { background:#374151; }
 </style>
 </head>
 
@@ -23,17 +25,17 @@ body { font-family: system-ui; }
     <h1 class="text-xl font-bold mb-6">FluxForge</h1>
 
     <nav class="space-y-2">
-      <button class="nav-btn" data-action="dashboard">Dashboard</button>
-      <button class="nav-btn" data-action="projects">Projects</button>
-      <button class="nav-btn" data-action="kanban">Kanban</button>
+      <button class="nav" onclick="showDashboard()">Dashboard</button>
+      <button class="nav" onclick="showProjects()">Projects</button>
+      <button class="nav" onclick="showKanban()">Kanban</button>
     </nav>
 
-    <button data-action="new-project" class="mt-auto bg-blue-500 py-2 rounded">
+    <button onclick="openModal()" class="mt-auto bg-blue-500 py-2 rounded btn">
       + New Project
     </button>
 
-    <button data-action="export" class="mt-2 bg-gray-700 py-2 rounded">Export</button>
-    <button data-action="import" class="mt-2 bg-gray-700 py-2 rounded">Import</button>
+    <button onclick="exportData()" class="mt-2 bg-gray-700 py-2 rounded btn">Export</button>
+    <button onclick="importData()" class="mt-2 bg-gray-700 py-2 rounded btn">Import</button>
   </aside>
 
   <!-- Main -->
@@ -52,18 +54,188 @@ body { font-family: system-ui; }
     <input id="project-name" class="w-full border p-2 mb-3" placeholder="Name">
     <textarea id="project-desc" class="w-full border p-2 mb-3" placeholder="Description"></textarea>
 
-    <div class="flex justify-between">
-      <button data-action="share">Share</button>
-      <div>
-        <button data-action="close-modal">Cancel</button>
-        <button data-action="save-project" class="bg-blue-500 text-white px-4 py-2 rounded">Save</button>
-      </div>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeModal()">Cancel</button>
+      <button onclick="saveProject()" class="bg-blue-500 text-white px-4 py-2 rounded">
+        Save
+      </button>
     </div>
-
-    <div id="share-link" class="text-xs mt-3 break-all text-blue-600"></div>
   </div>
 </div>
 
-<script src="app.js"></script>
+<script>
+/* STATE */
+let projects = [];
+let view = "dashboard";
+let currentProject = null;
+
+/* INIT */
+window.onload = () => {
+  load();
+  render();
+};
+
+/* STORAGE */
+function load() {
+  const data = localStorage.getItem("fluxforge");
+  if (data) projects = JSON.parse(data);
+}
+
+function save() {
+  localStorage.setItem("fluxforge", JSON.stringify(projects));
+}
+
+/* NAVIGATION */
+function showDashboard() {
+  view = "dashboard";
+  render();
+}
+
+function showProjects() {
+  view = "projects";
+  render();
+}
+
+function showKanban() {
+  view = "kanban";
+  render();
+}
+
+/* RENDER */
+function render() {
+  if (view === "dashboard") renderDashboard();
+  if (view === "projects") renderProjects();
+  if (view === "project") renderProject();
+  if (view === "kanban") renderKanban();
+}
+
+/* DASHBOARD */
+function renderDashboard() {
+  document.getElementById("title").innerText = "Dashboard";
+  document.getElementById("content").innerHTML = `
+    <div class="bg-white p-6 rounded shadow">
+      <h2>Total Projects: ${projects.length}</h2>
+    </div>
+  `;
+}
+
+/* PROJECT LIST */
+function renderProjects() {
+  document.getElementById("title").innerText = "Projects";
+
+  if (!projects.length) {
+    document.getElementById("content").innerHTML = "<p>No projects yet</p>";
+    return;
+  }
+
+  document.getElementById("content").innerHTML = `
+    <div class="grid gap-4">
+      ${projects.map(p => `
+        <div class="bg-white p-4 rounded shadow">
+          <h3 class="font-bold">${p.name}</h3>
+          <p class="text-sm">${p.desc}</p>
+          <button onclick="openProject('${p.id}')" class="text-blue-500 mt-2">
+            Open
+          </button>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+/* PROJECT VIEW */
+function openProject(id) {
+  currentProject = id;
+  view = "project";
+  render();
+}
+
+function renderProject() {
+  const p = projects.find(x => x.id === currentProject);
+
+  document.getElementById("title").innerText = p.name;
+
+  document.getElementById("content").innerHTML = `
+    <input id="task-input" class="border p-2 mb-3" placeholder="New task">
+    <button onclick="addTask()" class="bg-blue-500 text-white px-3 py-1 rounded">
+      Add Task
+    </button>
+
+    <ul class="mt-4 space-y-2">
+      ${p.tasks.map(t => `<li class="bg-white p-2 rounded shadow">${t}</li>`).join("")}
+    </ul>
+  `;
+}
+
+/* TASK */
+function addTask() {
+  const val = document.getElementById("task-input").value;
+  if (!val) return;
+
+  const p = projects.find(x => x.id === currentProject);
+  p.tasks.push(val);
+
+  save();
+  renderProject();
+}
+
+/* KANBAN */
+function renderKanban() {
+  document.getElementById("title").innerText = "Kanban";
+  document.getElementById("content").innerHTML = `
+    <div class="grid grid-cols-3 gap-4">
+      <div class="bg-white p-4 rounded">To Do</div>
+      <div class="bg-white p-4 rounded">Doing</div>
+      <div class="bg-white p-4 rounded">Done</div>
+    </div>
+  `;
+}
+
+/* MODAL */
+function openModal() {
+  document.getElementById("modal").classList.remove("hidden");
+}
+
+function closeModal() {
+  document.getElementById("modal").classList.add("hidden");
+}
+
+/* CREATE PROJECT */
+function saveProject() {
+  const name = document.getElementById("project-name").value;
+  const desc = document.getElementById("project-desc").value;
+
+  if (!name) return;
+
+  projects.push({
+    id: Date.now().toString(),
+    name,
+    desc,
+    tasks: []
+  });
+
+  save();
+  closeModal();
+  showProjects();
+}
+
+/* EXPORT */
+function exportData() {
+  const data = JSON.stringify(projects);
+  navigator.clipboard.writeText(data);
+  alert("Copied to clipboard");
+}
+
+/* IMPORT */
+function importData() {
+  const data = prompt("Paste your data");
+  if (!data) return;
+
+  projects = JSON.parse(data);
+  save();
+  render();
+}
+</script>
+
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FluxForge Ultra | Enterprise Local-First</title>
+    <title>FluxForge Enterprise | Resource PM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -15,9 +15,9 @@
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .slide-over { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(100%); }
         .slide-over.open { transform: translateX(0); }
-        .kbd { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-family: monospace; }
-        @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-        .recording { animation: pulse-red 1.5s infinite; color: #ef4444; }
+        .cell-overload { background-color: #fee2e2; color: #ef4444; border: 1px solid #fecaca; }
+        .cell-ok { background-color: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+        .kbd { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 5px; font-size: 10px; }
     </style>
 </head>
 <body class="text-slate-900">
@@ -26,37 +26,27 @@
     <aside class="bg-[#0f172a] text-slate-400 flex flex-col border-r border-slate-800 z-30">
         <div class="p-6 flex items-center gap-3">
             <div class="bg-indigo-600 p-2 rounded-lg text-white"><i class="fas fa-microchip"></i></div>
-            <span class="text-white font-bold text-lg tracking-tight">FluxForge</span>
+            <span class="text-white font-bold text-lg tracking-tight">FluxForge <span class="text-[10px] bg-white/10 px-1 rounded ml-1">ENT</span></span>
         </div>
 
         <nav class="flex-1 px-3 space-y-1 overflow-y-auto custom-scroll">
             <div onclick="setGlobalView('dashboard')" id="nav-dashboard" class="p-3 rounded-lg cursor-pointer flex items-center justify-between hover:bg-slate-800 transition-all">
                 <span><i class="fas fa-columns w-5"></i> Dashboard</span>
-                <span class="kbd">G</span>
             </div>
             <div onclick="setGlobalView('projects')" id="nav-projects" class="p-3 rounded-lg cursor-pointer flex items-center justify-between hover:bg-slate-800 transition-all">
                 <span><i class="fas fa-layer-group w-5"></i> Projects</span>
-                <span class="kbd">P</span>
+            </div>
+            <div onclick="setGlobalView('planner')" id="nav-planner" class="p-3 rounded-lg cursor-pointer flex items-center justify-between hover:bg-slate-800 transition-all">
+                <span><i class="fas fa-calendar-alt w-5"></i> Resource Planner</span>
             </div>
             
-            <div class="pt-6 pb-2 px-3 text-[10px] font-bold text-slate-500 uppercase">Recent Projects</div>
-            <div id="sidebar-projects-list" class="space-y-1"></div>
+            <div class="pt-6 pb-2 px-3 text-[10px] font-bold text-slate-500 uppercase">Team</div>
+            <div id="sidebar-team-list" class="space-y-1 px-3"></div>
         </nav>
 
-        <div id="global-timer" class="hidden p-4 bg-indigo-900/30 border-t border-indigo-500/30">
-            <div class="flex items-center gap-3 text-white">
-                <i class="fas fa-circle recording text-[8px]"></i>
-                <div class="flex-1 truncate">
-                    <p class="text-[10px] font-bold uppercase opacity-60">Active Session</p>
-                    <p id="timer-display-name" class="text-xs font-bold truncate">Designing UI</p>
-                </div>
-                <button onclick="stopTimer()" class="bg-white/10 hover:bg-white/20 p-2 rounded"><i class="fas fa-stop"></i></button>
-            </div>
-        </div>
-
         <div class="p-4 border-t border-slate-800">
-            <button onclick="openModal('projectModal')" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-lg font-bold text-sm mb-2">+ New Project</button>
-            <p class="text-[10px] text-center opacity-50">Press <span class="kbd">Ctrl+K</span> to search</p>
+            <button onclick="addTeamMember()" class="w-full border border-slate-700 text-slate-300 py-2 rounded-lg text-xs hover:bg-slate-800 transition-all mb-2">+ Add Member</button>
+            <button onclick="openModal('projectModal')" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-lg font-bold text-sm">+ Project</button>
         </div>
     </aside>
 
@@ -64,169 +54,47 @@
         <header class="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-20">
             <div id="breadcrumb" class="flex items-center gap-2 text-sm text-slate-500 font-medium"></div>
             <div class="flex items-center gap-4">
-                <div class="flex -space-x-2">
-                    <div class="w-8 h-8 rounded-full bg-indigo-500 border-2 border-white flex items-center justify-center text-[10px] text-white font-bold">JD</div>
-                </div>
+                <span class="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-1 rounded">LOCAL DATABASE ACTIVE</span>
             </div>
         </header>
 
         <div id="project-tabs" class="hidden h-12 bg-white border-b border-slate-200 flex px-6 gap-8 items-end z-20">
-            <button onclick="setProjectTab('list')" id="tab-list" class="pb-3 text-sm font-bold border-b-2 border-transparent hover:text-indigo-600 transition-all">Tasks</button>
-            <button onclick="setProjectTab('gantt')" id="tab-gantt" class="pb-3 text-sm font-bold border-b-2 border-transparent hover:text-indigo-600 transition-all">Gantt</button>
+            <button onclick="setProjectTab('list')" id="tab-list" class="pb-3 text-sm font-bold border-b-2 border-transparent transition-all">Tasks</button>
+            <button onclick="setProjectTab('gantt')" id="tab-gantt" class="pb-3 text-sm font-bold border-b-2 border-transparent transition-all">Gantt</button>
         </div>
 
         <section id="viewport" class="flex-1 overflow-auto custom-scroll p-8 bg-slate-50/50"></section>
     </main>
 </div>
 
-<div id="cmdPalette" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div class="p-4 border-b flex items-center gap-3">
-            <i class="fas fa-search text-slate-400"></i>
-            <input id="cmdInput" type="text" placeholder="Jump to project, task, or action..." class="w-full text-lg outline-none" oninput="handleSearch(this.value)">
-        </div>
-        <div id="cmdResults" class="max-h-[400px] overflow-y-auto p-2 space-y-1"></div>
-        <div class="p-3 bg-slate-50 border-t flex gap-4 text-[10px] text-slate-400 font-bold uppercase">
-            <span>Enter to select</span>
-            <span>Esc to close</span>
-        </div>
-    </div>
-</div>
-
 <div id="taskOverlay" class="hidden fixed inset-0 bg-slate-900/20 z-[70]" onclick="closeTaskInspector()"></div>
-<div id="taskInspector" class="slide-over fixed right-0 top-0 h-full w-[500px] bg-white z-[80] shadow-2xl flex flex-col">
+<div id="taskInspector" class="slide-over fixed right-0 top-0 h-full w-[550px] bg-white z-[80] shadow-2xl flex flex-col">
     </div>
 
 <div id="projectModal" class="hidden fixed inset-0 bg-slate-900/60 z-[90] flex items-center justify-center">
-    <div class="bg-white rounded-xl w-full max-w-md p-6 shadow-2xl">
-        <h2 class="text-xl font-bold mb-4">Create Project</h2>
+    <div class="bg-white rounded-xl w-full max-w-md p-6">
+        <h2 class="text-xl font-bold mb-4">New Project</h2>
         <input id="p-name" type="text" placeholder="Project Name" class="w-full border p-3 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-indigo-500">
-        <div class="flex gap-2 mb-4">
-            <button onclick="saveProject(false)" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg font-bold">Blank Project</button>
-            <button onclick="saveProject(true)" class="flex-1 bg-slate-100 py-2 rounded-lg font-bold hover:bg-slate-200">Use Template</button>
-        </div>
-        <button onclick="closeModal('projectModal')" class="w-full text-slate-400 text-sm">Cancel</button>
+        <button onclick="saveProject()" class="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-bold">Create</button>
+        <button onclick="closeModal('projectModal')" class="w-full mt-2 text-slate-400 text-sm">Cancel</button>
     </div>
 </div>
 
 <script>
-    // --- DATABASE & STATE ---
-    let db = JSON.parse(localStorage.getItem('ff_ultra_db')) || {
+    // --- DB INITIALIZATION ---
+    let db = JSON.parse(localStorage.getItem('ff_ent_db')) || {
         projects: [],
-        activeTimer: null, // { taskId: id, startTime: timestamp }
-        users: ["Admin User"]
+        users: [
+            { id: 1, name: "Sarah Engineer", role: "Frontend", capacity: 8 },
+            { id: 2, name: "Mike Dev", role: "Backend", capacity: 8 }
+        ]
     };
 
     let state = { currentView: 'dashboard', currentProjectId: null, currentTab: 'list' };
 
-    const sync = () => { localStorage.setItem('ff_ultra_db', JSON.stringify(db)); render(); };
+    const sync = () => { localStorage.setItem('ff_ent_db', JSON.stringify(db)); render(); };
 
-    // --- KEYBOARD SHORTCUTS ---
-    window.addEventListener('keydown', (e) => {
-        if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); toggleCmdPalette(); }
-        if (e.key === 'Escape') { closeModal('projectModal'); toggleCmdPalette(false); closeTaskInspector(); }
-        if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
-        if (e.key.toLowerCase() === 'g') setGlobalView('dashboard');
-        if (e.key.toLowerCase() === 'p') setGlobalView('projects');
-        if (e.key.toLowerCase() === 'n' && state.currentProjectId) addTask();
-    });
-
-    // --- COMMAND PALETTE ---
-    function toggleCmdPalette(show) {
-        const p = document.getElementById('cmdPalette');
-        p.classList.toggle('hidden', show === false);
-        if(!p.classList.contains('hidden')) document.getElementById('cmdInput').focus();
-    }
-
-    function handleSearch(query) {
-        const results = document.getElementById('cmdResults');
-        if(!query) { results.innerHTML = ''; return; }
-        
-        let html = '';
-        db.projects.forEach(p => {
-            if(p.name.toLowerCase().includes(query.toLowerCase())) {
-                html += `<div onclick="openProject(${p.id}); toggleCmdPalette(false)" class="p-3 hover:bg-indigo-50 rounded-lg cursor-pointer flex justify-between items-center">
-                    <span><i class="fas fa-folder mr-2 text-indigo-500"></i> ${p.name}</span>
-                    <span class="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-1 rounded">Project</span>
-                </div>`;
-            }
-            p.tasks.forEach(t => {
-                if(t.title.toLowerCase().includes(query.toLowerCase())) {
-                    html += `<div onclick="openProject(${p.id}); openTaskInspector(${t.id}); toggleCmdPalette(false)" class="p-3 hover:bg-indigo-50 rounded-lg cursor-pointer flex justify-between items-center">
-                        <span><i class="fas fa-check-circle mr-2 text-slate-400"></i> ${t.title}</span>
-                        <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded">Task in ${p.name}</span>
-                    </div>`;
-                }
-            });
-        });
-        results.innerHTML = html || '<p class="p-4 text-center text-slate-400">No results found...</p>';
-    }
-
-    // --- TIME TRACKING ---
-    function startTimer(taskId) {
-        db.activeTimer = { taskId, startTime: Date.now() };
-        sync();
-    }
-
-    function stopTimer() {
-        if(!db.activeTimer) return;
-        const duration = Math.round((Date.now() - db.activeTimer.startTime) / 1000 / 60); // minutes
-        const project = db.projects.find(p => p.tasks.some(t => t.id === db.activeTimer.taskId));
-        const task = project.tasks.find(t => t.id === db.activeTimer.taskId);
-        
-        task.timeLogs = task.timeLogs || [];
-        task.timeLogs.push({ date: new Date().toISOString(), minutes: duration });
-        db.activeTimer = null;
-        sync();
-    }
-
-    // --- PROJECT & TASK LOGIC ---
-    function saveProject(asTemplate) {
-        const name = document.getElementById('p-name').value;
-        if(!name) return;
-        const newProj = {
-            id: Date.now(),
-            name,
-            tasks: asTemplate ? [
-                { id: Date.now()+1, title: "Initial Research", status: "Todo", start: new Date().toISOString().split('T')[0], end: new Date().toISOString().split('T')[0], subtasks: [], timeLogs: [] },
-                { id: Date.now()+2, title: "Design Phase", status: "Todo", start: new Date().toISOString().split('T')[0], end: new Date().toISOString().split('T')[0], subtasks: [], timeLogs: [] }
-            ] : []
-        };
-        db.projects.push(newProj);
-        closeModal('projectModal');
-        openProject(newProj.id);
-        sync();
-    }
-
-    function addTask() {
-        const p = db.projects.find(x => x.id === state.currentProjectId);
-        const newTask = {
-            id: Date.now(),
-            title: "New Action Item",
-            desc: "",
-            status: "Todo",
-            priority: "Medium",
-            start: new Date().toISOString().split('T')[0],
-            end: new Date().toISOString().split('T')[0],
-            subtasks: [],
-            timeLogs: []
-        };
-        p.tasks.push(newTask);
-        sync();
-        openTaskInspector(newTask.id);
-    }
-
-    function addSubtask(taskId) {
-        const p = db.projects.find(x => x.id === state.currentProjectId);
-        const t = p.tasks.find(x => x.id === taskId);
-        const title = prompt("Sub-task title:");
-        if(!title) return;
-        t.subtasks.push({ id: Date.now(), title, completed: false });
-        sync();
-        openTaskInspector(taskId);
-    }
-
-    // --- NAVIGATION & UI ---
+    // --- NAVIGATION ---
     function setGlobalView(v) {
         state.currentView = v;
         state.currentProjectId = null;
@@ -242,67 +110,161 @@
         render();
     }
 
-    function setProjectTab(t) {
-        state.currentTab = t;
-        render();
+    function setProjectTab(t) { state.currentTab = t; render(); }
+
+    // --- RESOURCE PLANNER ENGINE ---
+    function renderPlanner() {
+        const vp = document.getElementById('viewport');
+        const bc = document.getElementById('breadcrumb');
+        bc.innerHTML = `<span>Company</span> / <span class="font-bold text-slate-900">Resource Planner</span>`;
+
+        // Create 14 day window
+        const days = [];
+        const start = new Date();
+        for(let i=0; i<14; i++) {
+            const d = new Date(start);
+            d.setDate(d.getDate() + i);
+            days.push(d);
+        }
+
+        let html = `
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold">Team Capacity Planner</h2>
+                <p class="text-sm text-slate-500">Visualizing 8hr/day allocation across all active projects.</p>
+            </div>
+            <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 border-b">
+                        <tr>
+                            <th class="p-4 text-[10px] font-bold text-slate-400 uppercase w-48 border-r">Team Member</th>
+                            ${days.map(d => `<th class="p-2 text-center text-[10px] font-bold text-slate-400 uppercase border-r">
+                                ${d.toLocaleDateString('en-GB', {weekday: 'short'})}<br>${d.getDate()}/${d.getMonth()+1}
+                            </th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        db.users.forEach(user => {
+            html += `<tr class="border-b"><td class="p-4 border-r"><p class="font-bold text-sm">${user.name}</p><p class="text-[10px] text-slate-400">${user.role}</p></td>`;
+            
+            days.forEach(day => {
+                const dateStr = day.toISOString().split('T')[0];
+                let dailyHours = 0;
+
+                // Calculate load from all projects
+                db.projects.forEach(p => {
+                    p.tasks.forEach(t => {
+                        if(parseInt(t.assignedTo) === user.id) {
+                            const tStart = new Date(t.start);
+                            const tEnd = new Date(t.end);
+                            const checkDay = new Date(dateStr);
+                            
+                            if(checkDay >= tStart && checkDay <= tEnd) {
+                                const duration = Math.max(1, Math.ceil((tEnd - tStart) / (1000*60*60*24)) + 1);
+                                dailyHours += (t.estHours || 0) / duration;
+                            }
+                        }
+                    });
+                });
+
+                const isOver = dailyHours > user.capacity;
+                const isEmpty = dailyHours === 0;
+                
+                html += `<td class="p-2 border-r text-center">
+                    <div class="rounded-lg py-2 text-[10px] font-bold ${isEmpty ? 'text-slate-200' : (isOver ? 'cell-overload' : 'cell-ok')}">
+                        ${dailyHours > 0 ? dailyHours.toFixed(1) + 'h' : '-'}
+                    </div>
+                </td>`;
+            });
+            html += `</tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+        vp.innerHTML = html;
+    }
+
+    // --- TASK & PROJECT OPS ---
+    function updateTask(id, field, val) {
+        db.projects.forEach(p => {
+            const t = p.tasks.find(x => x.id === id);
+            if(t) t[field] = val;
+        });
+        sync();
+    }
+
+    function saveProject() {
+        const name = document.getElementById('p-name').value;
+        if(!name) return;
+        const p = { id: Date.now(), name, tasks: [] };
+        db.projects.push(p);
+        closeModal('projectModal');
+        openProject(p.id);
+        sync();
+    }
+
+    function addTask() {
+        const p = db.projects.find(x => x.id === state.currentProjectId);
+        const t = { 
+            id: Date.now(), title: "New Task", start: new Date().toISOString().split('T')[0], 
+            end: new Date().toISOString().split('T')[0], assignedTo: null, estHours: 0, status: "Todo" 
+        };
+        p.tasks.push(t);
+        sync();
+        openTaskInspector(t.id);
+    }
+
+    function addTeamMember() {
+        const name = prompt("Name:");
+        const role = prompt("Role:");
+        if(name) {
+            db.users.push({ id: Date.now(), name, role, capacity: 8 });
+            sync();
+        }
     }
 
     function openTaskInspector(id) {
         const proj = db.projects.find(p => p.tasks.some(t => t.id === id));
         const task = proj.tasks.find(t => t.id === id);
-        const isThisTaskRunning = db.activeTimer?.taskId === id;
         
         const ins = document.getElementById('taskInspector');
         ins.innerHTML = `
             <div class="p-6 border-b flex justify-between items-center bg-slate-50">
-                <div class="flex items-center gap-2">
-                    <span class="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-2 py-1 rounded">TASK #${task.id.toString().slice(-4)}</span>
-                </div>
-                <button onclick="closeTaskInspector()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Resource Allocation</span>
+                <button onclick="closeTaskInspector()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
             </div>
-            <div class="flex-1 overflow-y-auto p-8 space-y-8">
+            <div class="p-8 space-y-6">
                 <input type="text" onchange="updateTask(${task.id}, 'title', this.value)" value="${task.title}" class="w-full text-2xl font-bold border-none outline-none focus:text-indigo-600">
                 
-                <div class="flex gap-4">
-                    <button onclick="${isThisTaskRunning ? 'stopTimer()' : `startTimer(${task.id})`}" class="flex-1 ${isThisTaskRunning ? 'bg-red-500' : 'bg-slate-900'} text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all">
-                        <i class="fas ${isThisTaskRunning ? 'fa-stop-circle' : 'fa-play-circle'}"></i>
-                        ${isThisTaskRunning ? 'Stop Timer' : 'Track Time'}
-                    </button>
-                    <div class="flex-1 bg-slate-100 rounded-xl p-3 text-center">
-                        <p class="text-[10px] font-bold text-slate-500 uppercase">Logged</p>
-                        <p class="font-bold text-lg">${task.timeLogs?.reduce((a,b)=>a+b.minutes,0) || 0}m</p>
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Assign to Member</label>
+                        <select onchange="updateTask(${task.id}, 'assignedTo', this.value)" class="w-full border rounded-lg p-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Unassigned</option>
+                            ${db.users.map(u => `<option value="${u.id}" ${task.assignedTo == u.id ? 'selected' : ''}>${u.name} (${u.role})</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Estimated Total Hours</label>
+                        <input type="number" onchange="updateTask(${task.id}, 'estHours', parseFloat(this.value))" value="${task.estHours}" class="w-full border rounded-lg p-3 text-sm">
                     </div>
                 </div>
 
-                <div>
-                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-4 flex justify-between">
-                        Sub-tasks 
-                        <button onclick="addSubtask(${task.id})" class="text-indigo-600">+ Add</button>
-                    </h4>
-                    <div class="space-y-2">
-                        ${task.subtasks.map(s => `
-                            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg group">
-                                <input type="checkbox" ${s.completed ? 'checked' : ''} onchange="toggleSubtask(${task.id}, ${s.id})" class="w-4 h-4 rounded text-indigo-600">
-                                <span class="text-sm ${s.completed ? 'line-through text-slate-400' : 'text-slate-700'}">${s.title}</span>
-                            </div>
-                        `).join('') || '<p class="text-xs text-slate-400 italic">No sub-tasks yet.</p>'}
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Start Date</label>
+                        <input type="date" value="${task.start}" onchange="updateTask(${task.id}, 'start', this.value)" class="w-full border rounded-lg p-3 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Finish Date</label>
+                        <input type="date" value="${task.end}" onchange="updateTask(${task.id}, 'end', this.value)" class="w-full border rounded-lg p-3 text-sm">
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Start</label>
-                        <input type="date" value="${task.start}" onchange="updateTask(${task.id}, 'start', this.value)" class="w-full border p-2 rounded text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">End</label>
-                        <input type="date" value="${task.end}" onchange="updateTask(${task.id}, 'end', this.value)" class="w-full border p-2 rounded text-sm">
-                    </div>
+                <div class="bg-indigo-50 p-4 rounded-xl">
+                    <p class="text-[10px] font-bold text-indigo-400 uppercase mb-1">Resource Impact</p>
+                    <p class="text-sm text-indigo-700">This task will occupy <strong>${((task.estHours || 0) / (Math.max(1, Math.ceil((new Date(task.end) - new Date(task.start)) / (1000*60*60*24)) + 1))).toFixed(1)} hours per day</strong> of the assigned member's capacity.</p>
                 </div>
-            </div>
-            <div class="p-6 border-t flex justify-between">
-                <button onclick="deleteTask(${task.id})" class="text-red-500 text-xs font-bold hover:underline">Delete Task</button>
-                <span class="text-xs text-slate-400">Last synced: Just now</span>
             </div>
         `;
         document.getElementById('taskOverlay').classList.remove('hidden');
@@ -314,61 +276,42 @@
         document.getElementById('taskInspector').classList.remove('open'); 
     }
 
-    function updateTask(id, field, val) {
-        db.projects.forEach(p => {
-            const t = p.tasks.find(x => x.id === id);
-            if(t) t[field] = val;
-        });
-        sync();
-    }
-
-    function toggleSubtask(taskId, subId) {
-        db.projects.forEach(p => {
-            const t = p.tasks.find(x => x.id === taskId);
-            if(t) {
-                const s = t.subtasks.find(x => x.id === subId);
-                s.completed = !s.completed;
-            }
-        });
-        sync();
-        openTaskInspector(taskId);
-    }
-
-    // --- GLOBAL RENDERING ---
+    // --- MASTER RENDER ---
     function render() {
         const vp = document.getElementById('viewport');
         const bc = document.getElementById('breadcrumb');
 
-        // Sidebar
-        document.getElementById('sidebar-projects-list').innerHTML = db.projects.map(p => `
-            <div onclick="openProject(${p.id})" class="p-2 px-3 text-sm rounded-lg cursor-pointer hover:bg-slate-800 transition-colors ${state.currentProjectId === p.id ? 'bg-indigo-600/20 text-white font-bold' : ''}">
-                <i class="fas fa-hashtag mr-2 text-indigo-500 text-[10px]"></i> ${p.name}
+        document.getElementById('sidebar-team-list').innerHTML = db.users.map(u => `
+            <div class="flex items-center gap-2 py-1">
+                <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                <span class="text-xs text-slate-300 font-medium">${u.name}</span>
             </div>
         `).join('');
 
-        // Global Timer Bar
-        const gt = document.getElementById('global-timer');
-        if(db.activeTimer) {
-            gt.classList.remove('hidden');
-            const project = db.projects.find(p => p.tasks.some(t => t.id === db.activeTimer.taskId));
-            const task = project.tasks.find(t => t.id === db.activeTimer.taskId);
-            document.getElementById('timer-display-name').innerText = task.title;
-        } else {
-            gt.classList.add('hidden');
+        if(state.currentView === 'planner') {
+            renderPlanner();
+            return;
         }
 
         if(state.currentView === 'dashboard') {
-            bc.innerHTML = `<span>Workspace</span> / <span class="font-bold text-slate-900">Dashboard</span>`;
+            bc.innerHTML = `<span>Company</span> / <span class="font-bold text-slate-900">Dashboard</span>`;
             vp.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">Ongoing</p>
-                        <h3 class="text-3xl font-bold">${db.projects.reduce((a,b)=>a+b.tasks.filter(t=>t.status!=='Done').length, 0)} Tasks</h3>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Active Load</p>
+                        <h3 class="text-3xl font-bold">${db.projects.length} Projects</h3>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">Hours Logged</p>
-                        <h3 class="text-3xl font-bold text-indigo-600">${Math.floor(db.projects.reduce((a,p)=>a+p.tasks.reduce((x,y)=>x+(y.timeLogs?.reduce((m,n)=>m+n.minutes,0)||0),0),0)/60)}h</h3>
+                    <div onclick="setGlobalView('planner')" class="bg-indigo-600 p-6 rounded-2xl shadow-lg text-white cursor-pointer hover:bg-indigo-700 transition-all">
+                        <p class="text-[10px] font-bold opacity-70 uppercase">Team Capacity</p>
+                        <h3 class="text-3xl font-bold">Check Planner <i class="fas fa-arrow-right ml-2 text-xl"></i></h3>
                     </div>
+                </div>
+                <h3 class="font-bold text-slate-800 mb-4">Quick Projects</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    ${db.projects.map(p => `<div onclick="openProject(${p.id})" class="p-4 bg-white border rounded-xl hover:border-indigo-500 cursor-pointer transition-all">
+                        <p class="font-bold text-slate-800">${p.name}</p>
+                        <p class="text-xs text-slate-400">${p.tasks.length} Active Tasks</p>
+                    </div>`).join('')}
                 </div>
             `;
         }
@@ -377,88 +320,42 @@
             const p = db.projects.find(x => x.id === state.currentProjectId);
             bc.innerHTML = `<span>Projects</span> / <span class="font-bold text-slate-900">${p.name}</span>`;
             
-            document.querySelectorAll('#project-tabs button').forEach(b => b.className = "pb-3 text-sm font-bold border-b-2 border-transparent text-slate-400");
-            document.getElementById(`tab-${state.currentTab}`).className = "pb-3 text-sm font-bold border-b-2 border-indigo-600 text-indigo-600";
-
             if(state.currentTab === 'list') {
                 vp.innerHTML = `
                     <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-xl font-bold">Project Workspace</h3>
-                        <button onclick="addTask()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm">+ New Task</button>
+                        <h3 class="text-xl font-bold">Task Management</h3>
+                        <button onclick="addTask()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm">+ Add Task</button>
                     </div>
                     <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
                         <table class="w-full text-left text-sm">
                             <thead class="bg-slate-50 border-b text-[10px] font-bold text-slate-400 uppercase">
                                 <tr>
-                                    <th class="px-6 py-4">Task Name</th>
-                                    <th class="px-6 py-4">Status</th>
-                                    <th class="px-6 py-4">Sub-tasks</th>
-                                    <th class="px-6 py-4">Time</th>
+                                    <th class="px-6 py-4">Item</th>
+                                    <th class="px-6 py-4">Assignee</th>
+                                    <th class="px-6 py-4">Est Hours</th>
+                                    <th class="px-6 py-4">Timeline</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100">
+                            <tbody>
                                 ${p.tasks.map(t => `
-                                    <tr onclick="openTaskInspector(${t.id})" class="hover:bg-slate-50 cursor-pointer transition-all">
-                                        <td class="px-6 py-4 font-bold text-slate-700">${t.title}</td>
-                                        <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">${t.status}</span></td>
-                                        <td class="px-6 py-4 text-slate-400">${t.subtasks.filter(s=>s.completed).length}/${t.subtasks.length}</td>
-                                        <td class="px-6 py-4 font-mono text-xs">${t.timeLogs?.reduce((a,b)=>a+b.minutes,0) || 0}m</td>
+                                    <tr onclick="openTaskInspector(${t.id})" class="border-b hover:bg-slate-50 cursor-pointer">
+                                        <td class="px-6 py-4 font-bold">${t.title}</td>
+                                        <td class="px-6 py-4">${db.users.find(u=>u.id==t.assignedTo)?.name || '<span class="text-slate-300 italic">Unassigned</span>'}</td>
+                                        <td class="px-6 py-4">${t.estHours}h</td>
+                                        <td class="px-6 py-4 text-xs text-slate-500">${t.start} <i class="fas fa-caret-right mx-1"></i> ${t.end}</td>
                                     </tr>
-                                `).join('') || '<tr><td colspan="4" class="text-center py-20 text-slate-300">Empty workspace.</td></tr>'}
+                                `).join('') || '<tr><td colspan="4" class="p-10 text-center text-slate-400">Project is empty.</td></tr>'}
                             </tbody>
                         </table>
                     </div>
                 `;
-            } else {
-                renderGantt(p);
             }
         }
-    }
-
-    function renderGantt(project) {
-        const vp = document.getElementById('viewport');
-        if(!project.tasks.length) { vp.innerHTML = `<p class="text-center py-20 text-slate-400">No tasks to display.</p>`; return; }
-        
-        const startDates = project.tasks.map(t => new Date(t.start));
-        const endDates = project.tasks.map(t => new Date(t.end));
-        const minDate = new Date(Math.min(...startDates));
-        const maxDate = new Date(Math.max(...endDates));
-        maxDate.setDate(maxDate.getDate() + 10);
-
-        const diffDays = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24));
-        const dayWidth = 40;
-
-        vp.innerHTML = `
-            <div class="bg-white rounded-2xl border overflow-hidden flex h-[500px]">
-                <div class="w-64 border-r bg-slate-50 shrink-0">
-                    <div class="h-10 border-b"></div>
-                    ${project.tasks.map(t => `<div class="h-12 border-b px-4 flex items-center text-xs font-bold truncate">${t.title}</div>`).join('')}
-                </div>
-                <div class="flex-1 overflow-x-auto custom-scroll">
-                    <div class="flex border-b h-10 bg-slate-50" style="width:${diffDays * dayWidth}px">
-                        ${Array.from({length: diffDays}).map((_, i) => {
-                            const d = new Date(minDate); d.setDate(d.getDate() + i);
-                            return `<div class="w-[40px] shrink-0 border-r text-[9px] flex items-center justify-center font-bold text-slate-400">${d.getDate()}</div>`;
-                        }).join('')}
-                    </div>
-                    <div class="relative" style="width:${diffDays * dayWidth}px">
-                        ${project.tasks.map((t, idx) => {
-                            const tStart = new Date(t.start);
-                            const tEnd = new Date(t.end);
-                            const left = Math.ceil((tStart - minDate) / (1000 * 60 * 60 * 24)) * dayWidth;
-                            const width = (Math.ceil((tEnd - tStart) / (1000 * 60 * 60 * 24)) + 1) * dayWidth;
-                            return `<div onclick="openTaskInspector(${t.id})" class="absolute bg-indigo-500 h-6 rounded-full top-[12px] cursor-pointer shadow-md hover:bg-indigo-400" style="left:${left}px; width:${width}px; top:${idx * 48 + 12}px"></div>`;
-                        }).join('')}
-                    </div>
-                </div>
-            </div>
-        `;
     }
 
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-    // Init
     render();
 </script>
 </body>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FluxForge Enterprise | Resource PM</title>
+    <title>FluxForge Enterprise | Resource Intelligence</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -17,7 +17,8 @@
         .slide-over.open { transform: translateX(0); }
         .cell-overload { background-color: #fee2e2; color: #ef4444; border: 1px solid #fecaca; }
         .cell-ok { background-color: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
-        .kbd { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 5px; font-size: 10px; }
+        .progress-bar { height: 8px; border-radius: 10px; background: #e2e8f0; overflow: hidden; }
+        .progress-fill { height: 100%; transition: width 0.5s ease-out; }
     </style>
 </head>
 <body class="text-slate-900">
@@ -26,39 +27,38 @@
     <aside class="bg-[#0f172a] text-slate-400 flex flex-col border-r border-slate-800 z-30">
         <div class="p-6 flex items-center gap-3">
             <div class="bg-indigo-600 p-2 rounded-lg text-white"><i class="fas fa-microchip"></i></div>
-            <span class="text-white font-bold text-lg tracking-tight">FluxForge <span class="text-[10px] bg-white/10 px-1 rounded ml-1">ENT</span></span>
+            <span class="text-white font-bold text-lg tracking-tight">FluxForge <span class="text-[10px] bg-white/10 px-1 rounded ml-1 uppercase">ENT</span></span>
         </div>
 
         <nav class="flex-1 px-3 space-y-1 overflow-y-auto custom-scroll">
-            <div onclick="setGlobalView('dashboard')" id="nav-dashboard" class="p-3 rounded-lg cursor-pointer flex items-center justify-between hover:bg-slate-800 transition-all">
-                <span><i class="fas fa-columns w-5"></i> Dashboard</span>
+            <div onclick="setGlobalView('dashboard')" id="nav-dashboard" class="p-3 rounded-lg cursor-pointer flex items-center gap-3 hover:bg-slate-800 transition-all">
+                <i class="fas fa-columns w-5 text-center"></i> Dashboard
             </div>
-            <div onclick="setGlobalView('projects')" id="nav-projects" class="p-3 rounded-lg cursor-pointer flex items-center justify-between hover:bg-slate-800 transition-all">
-                <span><i class="fas fa-layer-group w-5"></i> Projects</span>
+            <div onclick="setGlobalView('projects')" id="nav-projects" class="p-3 rounded-lg cursor-pointer flex items-center gap-3 hover:bg-slate-800 transition-all">
+                <i class="fas fa-layer-group w-5 text-center"></i> Projects
             </div>
-            <div onclick="setGlobalView('planner')" id="nav-planner" class="p-3 rounded-lg cursor-pointer flex items-center justify-between hover:bg-slate-800 transition-all">
-                <span><i class="fas fa-calendar-alt w-5"></i> Resource Planner</span>
+            <div onclick="setGlobalView('planner')" id="nav-planner" class="p-3 rounded-lg cursor-pointer flex items-center gap-3 hover:bg-slate-800 transition-all">
+                <i class="fas fa-calendar-alt w-5 text-center"></i> Planner
             </div>
-            
-            <div class="pt-6 pb-2 px-3 text-[10px] font-bold text-slate-500 uppercase">Team</div>
-            <div id="sidebar-team-list" class="space-y-1 px-3"></div>
+            <div onclick="setGlobalView('team')" id="nav-team" class="p-3 rounded-lg cursor-pointer flex items-center gap-3 hover:bg-slate-800 transition-all">
+                <i class="fas fa-users w-5 text-center"></i> Team Directory
+            </div>
         </nav>
 
         <div class="p-4 border-t border-slate-800">
-            <button onclick="addTeamMember()" class="w-full border border-slate-700 text-slate-300 py-2 rounded-lg text-xs hover:bg-slate-800 transition-all mb-2">+ Add Member</button>
             <button onclick="openModal('projectModal')" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-lg font-bold text-sm">+ Project</button>
         </div>
     </aside>
 
     <main class="flex flex-col h-full overflow-hidden">
-        <header class="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-20">
+        <header class="h-14 bg-white border-b flex items-center justify-between px-6 shrink-0 z-20">
             <div id="breadcrumb" class="flex items-center gap-2 text-sm text-slate-500 font-medium"></div>
             <div class="flex items-center gap-4">
-                <span class="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-1 rounded">LOCAL DATABASE ACTIVE</span>
+                <span class="text-[10px] font-bold text-slate-400">v2.4 LOCAL STORAGE</span>
             </div>
         </header>
 
-        <div id="project-tabs" class="hidden h-12 bg-white border-b border-slate-200 flex px-6 gap-8 items-end z-20">
+        <div id="project-tabs" class="hidden h-12 bg-white border-b flex px-6 gap-8 items-end z-20">
             <button onclick="setProjectTab('list')" id="tab-list" class="pb-3 text-sm font-bold border-b-2 border-transparent transition-all">Tasks</button>
             <button onclick="setProjectTab('gantt')" id="tab-gantt" class="pb-3 text-sm font-bold border-b-2 border-transparent transition-all">Gantt</button>
         </div>
@@ -67,32 +67,33 @@
     </main>
 </div>
 
-<div id="taskOverlay" class="hidden fixed inset-0 bg-slate-900/20 z-[70]" onclick="closeTaskInspector()"></div>
-<div id="taskInspector" class="slide-over fixed right-0 top-0 h-full w-[550px] bg-white z-[80] shadow-2xl flex flex-col">
+<div id="overlay" class="hidden fixed inset-0 bg-slate-900/20 z-[70]" onclick="closeInspector()"></div>
+<div id="inspector" class="slide-over fixed right-0 top-0 h-full w-[550px] bg-white z-[80] shadow-2xl flex flex-col">
     </div>
 
 <div id="projectModal" class="hidden fixed inset-0 bg-slate-900/60 z-[90] flex items-center justify-center">
     <div class="bg-white rounded-xl w-full max-w-md p-6">
         <h2 class="text-xl font-bold mb-4">New Project</h2>
         <input id="p-name" type="text" placeholder="Project Name" class="w-full border p-3 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-indigo-500">
-        <button onclick="saveProject()" class="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-bold">Create</button>
+        <button onclick="saveProject()" class="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-bold">Launch Project</button>
         <button onclick="closeModal('projectModal')" class="w-full mt-2 text-slate-400 text-sm">Cancel</button>
     </div>
 </div>
 
 <script>
-    // --- DB INITIALIZATION ---
-    let db = JSON.parse(localStorage.getItem('ff_ent_db')) || {
+    // --- DATABASE ---
+    let db = JSON.parse(localStorage.getItem('ff_res_db')) || {
         projects: [],
         users: [
-            { id: 1, name: "Sarah Engineer", role: "Frontend", capacity: 8 },
-            { id: 2, name: "Mike Dev", role: "Backend", capacity: 8 }
+            { id: 1, name: "Alex Rivers", role: "Frontend Engineer", capacity: 8, bio: "Expert in React and UI Architecture.", color: "indigo" },
+            { id: 2, name: "Sam Chen", role: "Backend Architect", capacity: 8, bio: "Database optimization specialist.", color: "emerald" },
+            { id: 3, name: "Jordan Blake", role: "UI/UX Designer", capacity: 4, bio: "Part-time design consultant.", color: "amber" }
         ]
     };
 
     let state = { currentView: 'dashboard', currentProjectId: null, currentTab: 'list' };
 
-    const sync = () => { localStorage.setItem('ff_ent_db', JSON.stringify(db)); render(); };
+    const sync = () => { localStorage.setItem('ff_res_db', JSON.stringify(db)); render(); };
 
     // --- NAVIGATION ---
     function setGlobalView(v) {
@@ -112,85 +113,315 @@
 
     function setProjectTab(t) { state.currentTab = t; render(); }
 
-    // --- RESOURCE PLANNER ENGINE ---
+    // --- USER / TEAM LOGIC ---
+    function openUserInspector(userId) {
+        const user = db.users.find(u => u.id == userId);
+        
+        // Calculate Statistics
+        let totalAssignedHours = 0;
+        let activeTasks = [];
+        db.projects.forEach(p => {
+            p.tasks.forEach(t => {
+                if(t.assignedTo == userId) {
+                    totalAssignedHours += (t.estHours || 0);
+                    activeTasks.push({ project: p.name, ...t });
+                }
+            });
+        });
+
+        const windowDays = 14;
+        const totalCapacity = user.capacity * windowDays;
+        const utilization = Math.min(100, Math.round((totalAssignedHours / totalCapacity) * 100));
+
+        const ins = document.getElementById('inspector');
+        ins.innerHTML = `
+            <div class="p-6 border-b flex justify-between items-center bg-slate-50">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Member Profile</span>
+                <button onclick="closeInspector()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-8 space-y-8">
+                <div class="flex items-center gap-6">
+                    <div class="w-20 h-20 rounded-2xl bg-${user.color}-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                        ${user.name.charAt(0)}
+                    </div>
+                    <div>
+                        <input type="text" onchange="updateUser(${user.id}, 'name', this.value)" value="${user.name}" class="text-2xl font-bold border-none outline-none focus:text-indigo-600 block">
+                        <input type="text" onchange="updateUser(${user.id}, 'role', this.value)" value="${user.role}" class="text-slate-400 border-none outline-none block text-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white border rounded-xl p-4 shadow-sm">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Utilization (14d)</p>
+                        <p class="text-2xl font-bold">${utilization}%</p>
+                        <div class="progress-bar mt-2">
+                            <div class="progress-fill bg-indigo-500" style="width: ${utilization}%"></div>
+                        </div>
+                    </div>
+                    <div class="bg-white border rounded-xl p-4 shadow-sm">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Free Capacity</p>
+                        <p class="text-2xl font-bold text-emerald-600">${Math.max(0, totalCapacity - totalAssignedHours)}h</p>
+                        <p class="text-[9px] text-slate-400">Hours remaining this fortnight</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h4 class="text-xs font-bold text-slate-500 uppercase">Working Parameters</h4>
+                    <div class="p-4 bg-slate-50 rounded-xl space-y-4 border">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Daily Capacity (Hours)</label>
+                            <input type="number" onchange="updateUser(${user.id}, 'capacity', parseInt(this.value))" value="${user.capacity}" class="w-full border rounded-lg p-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Professional Bio</label>
+                            <textarea onchange="updateUser(${user.id}, 'bio', this.value)" class="w-full border rounded-lg p-3 text-sm h-20">${user.bio || ''}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-bold text-slate-500 uppercase mb-4">Assigned Workload</h4>
+                    <div class="space-y-2">
+                        ${activeTasks.map(t => `
+                            <div class="p-3 bg-white border rounded-lg shadow-sm flex justify-between items-center">
+                                <div>
+                                    <p class="text-xs font-bold text-slate-800">${t.title}</p>
+                                    <p class="text-[10px] text-slate-400">${t.project}</p>
+                                </div>
+                                <span class="text-[10px] font-mono bg-slate-100 px-2 py-1 rounded font-bold">${t.estHours}h</span>
+                            </div>
+                        `).join('') || '<p class="text-xs text-slate-400 italic">No tasks currently assigned.</p>'}
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t bg-slate-50">
+                <button onclick="deleteUser(${user.id})" class="text-red-500 text-[10px] font-bold uppercase hover:underline">Remove Member from Team</button>
+            </div>
+        `;
+        
+        document.getElementById('overlay').classList.remove('hidden');
+        ins.classList.add('open');
+    }
+
+    function updateUser(id, field, val) {
+        const u = db.users.find(x => x.id == id);
+        u[field] = val;
+        sync();
+    }
+
+    function deleteUser(id) {
+        if(!confirm("Are you sure? All tasks will become unassigned.")) return;
+        db.users = db.users.filter(u => u.id != id);
+        db.projects.forEach(p => p.tasks.forEach(t => { if(t.assignedTo == id) t.assignedTo = null; }));
+        closeInspector();
+        sync();
+    }
+
+    // --- MASTER RENDERER ---
+    function render() {
+        const vp = document.getElementById('viewport');
+        const bc = document.getElementById('breadcrumb');
+
+        if (state.currentView === 'team') {
+            bc.innerHTML = `<span>Company</span> / <span class="font-bold text-slate-900">Team Directory</span>`;
+            vp.innerHTML = `
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold">Team Members</h2>
+                        <p class="text-sm text-slate-500">Manage individuals and their professional capacities.</p>
+                    </div>
+                    <button onclick="addUser()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm">+ Add Member</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    ${db.users.map(u => `
+                        <div onclick="openUserInspector(${u.id})" class="bg-white p-6 rounded-2xl border hover:border-indigo-500 cursor-pointer transition-all shadow-sm group">
+                            <div class="w-12 h-12 rounded-xl bg-${u.color}-500 text-white flex items-center justify-center font-bold mb-4 group-hover:scale-110 transition-transform">
+                                ${u.name.charAt(0)}
+                            </div>
+                            <h4 class="font-bold text-slate-800">${u.name}</h4>
+                            <p class="text-xs text-slate-500 mb-4">${u.role}</p>
+                            <div class="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase pt-4 border-t">
+                                <span>Daily Capacity</span>
+                                <span class="text-slate-800">${u.capacity} Hours</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            return;
+        }
+
+        if (state.currentView === 'planner') {
+            renderPlanner();
+            return;
+        }
+
+        if (state.currentView === 'dashboard') {
+            bc.innerHTML = `<span>Company</span> / <span class="font-bold text-slate-900">Dashboard</span>`;
+            vp.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Team Size</p>
+                        <h3 class="text-3xl font-bold">${db.users.length} Active Members</h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Live Projects</p>
+                        <h3 class="text-3xl font-bold text-indigo-600">${db.projects.length}</h3>
+                    </div>
+                </div>
+                <div class="bg-indigo-900 p-8 rounded-2xl text-white shadow-xl relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h3 class="text-2xl font-bold mb-2">Welcome Back</h3>
+                        <p class="opacity-70 text-sm max-w-md">Your team has ${db.projects.reduce((a,b)=>a+b.tasks.length,0)} tasks scheduled across the local workspace.</p>
+                    </div>
+                    <i class="fas fa-rocket absolute right-[-20px] bottom-[-20px] text-9xl opacity-10 -rotate-12"></i>
+                </div>
+            `;
+        }
+
+        if (state.currentView === 'project-detail') {
+            const p = db.projects.find(x => x.id === state.currentProjectId);
+            bc.innerHTML = `<span>Projects</span> / <span class="font-bold text-slate-900">${p.name}</span>`;
+            
+            if(state.currentTab === 'list') {
+                vp.innerHTML = `
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold">Workspace</h3>
+                        <button onclick="addTask()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm">+ Add Task</button>
+                    </div>
+                    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 border-b text-[10px] font-bold text-slate-400 uppercase">
+                                <tr><th class="px-6 py-4">Item</th><th class="px-6 py-4">Assignee</th><th class="px-6 py-4">Est.</th><th class="px-6 py-4">Timeline</th></tr>
+                            </thead>
+                            <tbody>
+                                ${p.tasks.map(t => `
+                                    <tr onclick="openTaskInspector(${t.id})" class="border-b hover:bg-slate-50 cursor-pointer">
+                                        <td class="px-6 py-4 font-bold">${t.title}</td>
+                                        <td class="px-6 py-4">${db.users.find(u=>u.id==t.assignedTo)?.name || 'Unassigned'}</td>
+                                        <td class="px-6 py-4 font-mono">${t.estHours}h</td>
+                                        <td class="px-6 py-4 text-xs text-slate-400">${t.start} <i class="fas fa-caret-right mx-1"></i> ${t.end}</td>
+                                    </tr>
+                                `).join('') || '<tr><td colspan="4" class="p-10 text-center italic text-slate-400">No tasks in this project.</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else {
+                renderGantt(p);
+            }
+        }
+    }
+
+    // Logic for the Heatmap Planner
     function renderPlanner() {
         const vp = document.getElementById('viewport');
         const bc = document.getElementById('breadcrumb');
         bc.innerHTML = `<span>Company</span> / <span class="font-bold text-slate-900">Resource Planner</span>`;
 
-        // Create 14 day window
         const days = [];
         const start = new Date();
         for(let i=0; i<14; i++) {
-            const d = new Date(start);
-            d.setDate(d.getDate() + i);
-            days.push(d);
+            const d = new Date(start); d.setDate(d.getDate() + i); days.push(d);
         }
 
         let html = `
-            <div class="mb-6">
-                <h2 class="text-2xl font-bold">Team Capacity Planner</h2>
-                <p class="text-sm text-slate-500">Visualizing 8hr/day allocation across all active projects.</p>
-            </div>
-            <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+            <div class="mb-8"><h2 class="text-2xl font-bold">Capacity Heatmap</h2><p class="text-sm text-slate-500">Tracking daily load vs. individual capacity.</p></div>
+            <div class="bg-white rounded-2xl border shadow-sm overflow-hidden overflow-x-auto custom-scroll">
                 <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50 border-b">
-                        <tr>
-                            <th class="p-4 text-[10px] font-bold text-slate-400 uppercase w-48 border-r">Team Member</th>
-                            ${days.map(d => `<th class="p-2 text-center text-[10px] font-bold text-slate-400 uppercase border-r">
-                                ${d.toLocaleDateString('en-GB', {weekday: 'short'})}<br>${d.getDate()}/${d.getMonth()+1}
-                            </th>`).join('')}
-                        </tr>
+                    <thead class="bg-slate-50 border-b text-[10px] font-bold text-slate-400 uppercase">
+                        <tr><th class="p-4 border-r w-48">Team Member</th>${days.map(d => `<th class="p-2 border-r text-center">${d.getDate()}/${d.getMonth()+1}</th>`).join('')}</tr>
                     </thead>
                     <tbody>
+                        ${db.users.map(user => {
+                            let row = `<tr class="border-b hover:bg-slate-50 transition-colors"><td onclick="openUserInspector(${user.id})" class="p-4 border-r cursor-pointer"><p class="font-bold text-sm text-indigo-600">${user.name}</p><p class="text-[10px] text-slate-400">${user.capacity}h Limit</p></td>`;
+                            days.forEach(day => {
+                                let load = 0;
+                                const dateStr = day.toISOString().split('T')[0];
+                                db.projects.forEach(p => p.tasks.forEach(t => {
+                                    if(t.assignedTo == user.id) {
+                                        const tS = new Date(t.start); const tE = new Date(t.end);
+                                        if(day >= tS && day <= tE) {
+                                            const dur = Math.max(1, Math.ceil((tE - tS) / (1000*60*60*24)) + 1);
+                                            load += (t.estHours || 0) / dur;
+                                        }
+                                    }
+                                }));
+                                const isOver = load > user.capacity;
+                                row += `<td class="p-2 border-r text-center">
+                                    <div class="rounded py-1 text-[10px] font-bold ${load == 0 ? 'text-slate-200' : (isOver ? 'cell-overload' : 'cell-ok')}">
+                                        ${load > 0 ? load.toFixed(1) + 'h' : '-'}
+                                    </div>
+                                </td>`;
+                            });
+                            return row + '</tr>';
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
         `;
-
-        db.users.forEach(user => {
-            html += `<tr class="border-b"><td class="p-4 border-r"><p class="font-bold text-sm">${user.name}</p><p class="text-[10px] text-slate-400">${user.role}</p></td>`;
-            
-            days.forEach(day => {
-                const dateStr = day.toISOString().split('T')[0];
-                let dailyHours = 0;
-
-                // Calculate load from all projects
-                db.projects.forEach(p => {
-                    p.tasks.forEach(t => {
-                        if(parseInt(t.assignedTo) === user.id) {
-                            const tStart = new Date(t.start);
-                            const tEnd = new Date(t.end);
-                            const checkDay = new Date(dateStr);
-                            
-                            if(checkDay >= tStart && checkDay <= tEnd) {
-                                const duration = Math.max(1, Math.ceil((tEnd - tStart) / (1000*60*60*24)) + 1);
-                                dailyHours += (t.estHours || 0) / duration;
-                            }
-                        }
-                    });
-                });
-
-                const isOver = dailyHours > user.capacity;
-                const isEmpty = dailyHours === 0;
-                
-                html += `<td class="p-2 border-r text-center">
-                    <div class="rounded-lg py-2 text-[10px] font-bold ${isEmpty ? 'text-slate-200' : (isOver ? 'cell-overload' : 'cell-ok')}">
-                        ${dailyHours > 0 ? dailyHours.toFixed(1) + 'h' : '-'}
-                    </div>
-                </td>`;
-            });
-            html += `</tr>`;
-        });
-
-        html += `</tbody></table></div>`;
         vp.innerHTML = html;
     }
 
-    // --- TASK & PROJECT OPS ---
+    // Task Logic
+    function openTaskInspector(id) {
+        const proj = db.projects.find(p => p.tasks.some(t => t.id === id));
+        const task = proj.tasks.find(t => t.id === id);
+        const ins = document.getElementById('inspector');
+        ins.innerHTML = `
+            <div class="p-6 border-b flex justify-between items-center bg-slate-50">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Edit Task</span>
+                <button onclick="closeInspector()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-8 space-y-6">
+                <input type="text" onchange="updateTask(${task.id}, 'title', this.value)" value="${task.title}" class="w-full text-2xl font-bold border-none outline-none focus:text-indigo-600">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Assigned To</label>
+                        <select onchange="updateTask(${task.id}, 'assignedTo', this.value)" class="w-full border rounded-lg p-2 text-sm">
+                            <option value="">Unassigned</option>
+                            ${db.users.map(u => `<option value="${u.id}" ${task.assignedTo == u.id ? 'selected' : ''}>${u.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Estimate (Hours)</label>
+                        <input type="number" onchange="updateTask(${task.id}, 'estHours', parseFloat(this.value))" value="${task.estHours}" class="w-full border rounded-lg p-2 text-sm">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Start Date</label>
+                        <input type="date" value="${task.start}" onchange="updateTask(${task.id}, 'start', this.value)" class="w-full border rounded-lg p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Due Date</label>
+                        <input type="date" value="${task.end}" onchange="updateTask(${task.id}, 'end', this.value)" class="w-full border rounded-lg p-2 text-sm">
+                    </div>
+                </div>
+                <button onclick="deleteTask(${task.id})" class="text-red-500 text-xs font-bold uppercase hover:underline">Delete Task</button>
+            </div>
+        `;
+        document.getElementById('overlay').classList.remove('hidden');
+        ins.classList.add('open');
+    }
+
     function updateTask(id, field, val) {
-        db.projects.forEach(p => {
-            const t = p.tasks.find(x => x.id === id);
-            if(t) t[field] = val;
-        });
+        db.projects.forEach(p => { const t = p.tasks.find(x => x.id == id); if(t) t[field] = val; });
         sync();
+    }
+
+    function deleteTask(id) {
+        db.projects.forEach(p => p.tasks = p.tasks.filter(t => t.id != id));
+        closeInspector();
+        sync();
+    }
+
+    function addUser() {
+        const name = prompt("Enter Member Name:");
+        if(name) {
+            db.users.push({ id: Date.now(), name, role: "New Member", capacity: 8, color: "indigo" });
+            sync();
+        }
     }
 
     function saveProject() {
@@ -205,154 +436,13 @@
 
     function addTask() {
         const p = db.projects.find(x => x.id === state.currentProjectId);
-        const t = { 
-            id: Date.now(), title: "New Task", start: new Date().toISOString().split('T')[0], 
-            end: new Date().toISOString().split('T')[0], assignedTo: null, estHours: 0, status: "Todo" 
-        };
+        const t = { id: Date.now(), title: "New Task", start: new Date().toISOString().split('T')[0], end: new Date().toISOString().split('T')[0], estHours: 0, assignedTo: null };
         p.tasks.push(t);
         sync();
         openTaskInspector(t.id);
     }
 
-    function addTeamMember() {
-        const name = prompt("Name:");
-        const role = prompt("Role:");
-        if(name) {
-            db.users.push({ id: Date.now(), name, role, capacity: 8 });
-            sync();
-        }
-    }
-
-    function openTaskInspector(id) {
-        const proj = db.projects.find(p => p.tasks.some(t => t.id === id));
-        const task = proj.tasks.find(t => t.id === id);
-        
-        const ins = document.getElementById('taskInspector');
-        ins.innerHTML = `
-            <div class="p-6 border-b flex justify-between items-center bg-slate-50">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Resource Allocation</span>
-                <button onclick="closeTaskInspector()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <div class="p-8 space-y-6">
-                <input type="text" onchange="updateTask(${task.id}, 'title', this.value)" value="${task.title}" class="w-full text-2xl font-bold border-none outline-none focus:text-indigo-600">
-                
-                <div class="grid grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Assign to Member</label>
-                        <select onchange="updateTask(${task.id}, 'assignedTo', this.value)" class="w-full border rounded-lg p-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="">Unassigned</option>
-                            ${db.users.map(u => `<option value="${u.id}" ${task.assignedTo == u.id ? 'selected' : ''}>${u.name} (${u.role})</option>`).join('')}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Estimated Total Hours</label>
-                        <input type="number" onchange="updateTask(${task.id}, 'estHours', parseFloat(this.value))" value="${task.estHours}" class="w-full border rounded-lg p-3 text-sm">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Start Date</label>
-                        <input type="date" value="${task.start}" onchange="updateTask(${task.id}, 'start', this.value)" class="w-full border rounded-lg p-3 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Finish Date</label>
-                        <input type="date" value="${task.end}" onchange="updateTask(${task.id}, 'end', this.value)" class="w-full border rounded-lg p-3 text-sm">
-                    </div>
-                </div>
-
-                <div class="bg-indigo-50 p-4 rounded-xl">
-                    <p class="text-[10px] font-bold text-indigo-400 uppercase mb-1">Resource Impact</p>
-                    <p class="text-sm text-indigo-700">This task will occupy <strong>${((task.estHours || 0) / (Math.max(1, Math.ceil((new Date(task.end) - new Date(task.start)) / (1000*60*60*24)) + 1))).toFixed(1)} hours per day</strong> of the assigned member's capacity.</p>
-                </div>
-            </div>
-        `;
-        document.getElementById('taskOverlay').classList.remove('hidden');
-        ins.classList.add('open');
-    }
-
-    function closeTaskInspector() { 
-        document.getElementById('taskOverlay').classList.add('hidden'); 
-        document.getElementById('taskInspector').classList.remove('open'); 
-    }
-
-    // --- MASTER RENDER ---
-    function render() {
-        const vp = document.getElementById('viewport');
-        const bc = document.getElementById('breadcrumb');
-
-        document.getElementById('sidebar-team-list').innerHTML = db.users.map(u => `
-            <div class="flex items-center gap-2 py-1">
-                <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                <span class="text-xs text-slate-300 font-medium">${u.name}</span>
-            </div>
-        `).join('');
-
-        if(state.currentView === 'planner') {
-            renderPlanner();
-            return;
-        }
-
-        if(state.currentView === 'dashboard') {
-            bc.innerHTML = `<span>Company</span> / <span class="font-bold text-slate-900">Dashboard</span>`;
-            vp.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">Active Load</p>
-                        <h3 class="text-3xl font-bold">${db.projects.length} Projects</h3>
-                    </div>
-                    <div onclick="setGlobalView('planner')" class="bg-indigo-600 p-6 rounded-2xl shadow-lg text-white cursor-pointer hover:bg-indigo-700 transition-all">
-                        <p class="text-[10px] font-bold opacity-70 uppercase">Team Capacity</p>
-                        <h3 class="text-3xl font-bold">Check Planner <i class="fas fa-arrow-right ml-2 text-xl"></i></h3>
-                    </div>
-                </div>
-                <h3 class="font-bold text-slate-800 mb-4">Quick Projects</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    ${db.projects.map(p => `<div onclick="openProject(${p.id})" class="p-4 bg-white border rounded-xl hover:border-indigo-500 cursor-pointer transition-all">
-                        <p class="font-bold text-slate-800">${p.name}</p>
-                        <p class="text-xs text-slate-400">${p.tasks.length} Active Tasks</p>
-                    </div>`).join('')}
-                </div>
-            `;
-        }
-
-        if(state.currentView === 'project-detail') {
-            const p = db.projects.find(x => x.id === state.currentProjectId);
-            bc.innerHTML = `<span>Projects</span> / <span class="font-bold text-slate-900">${p.name}</span>`;
-            
-            if(state.currentTab === 'list') {
-                vp.innerHTML = `
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-xl font-bold">Task Management</h3>
-                        <button onclick="addTask()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm">+ Add Task</button>
-                    </div>
-                    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-slate-50 border-b text-[10px] font-bold text-slate-400 uppercase">
-                                <tr>
-                                    <th class="px-6 py-4">Item</th>
-                                    <th class="px-6 py-4">Assignee</th>
-                                    <th class="px-6 py-4">Est Hours</th>
-                                    <th class="px-6 py-4">Timeline</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${p.tasks.map(t => `
-                                    <tr onclick="openTaskInspector(${t.id})" class="border-b hover:bg-slate-50 cursor-pointer">
-                                        <td class="px-6 py-4 font-bold">${t.title}</td>
-                                        <td class="px-6 py-4">${db.users.find(u=>u.id==t.assignedTo)?.name || '<span class="text-slate-300 italic">Unassigned</span>'}</td>
-                                        <td class="px-6 py-4">${t.estHours}h</td>
-                                        <td class="px-6 py-4 text-xs text-slate-500">${t.start} <i class="fas fa-caret-right mx-1"></i> ${t.end}</td>
-                                    </tr>
-                                `).join('') || '<tr><td colspan="4" class="p-10 text-center text-slate-400">Project is empty.</td></tr>'}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            }
-        }
-    }
-
+    function closeInspector() { document.getElementById('overlay').classList.add('hidden'); document.getElementById('inspector').classList.remove('open'); }
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
